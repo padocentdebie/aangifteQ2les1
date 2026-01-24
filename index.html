@@ -41,30 +41,28 @@
 
 <div class="main-wrapper">
     <div id="chat-section">
-        <div id="chat-header">AANGIFTE: ANNEMARIE VAN DOOREN</div>
+        <div id="chat-header">VERHOOR: ANNEMARIE VAN DOOREN</div>
         <div id="messages">
-            <div class="bubble bot">Ik ben Annemarie van Dooren. Schiet maar op met die vragen, ik heb hier helemaal geen zin in. Mijn tijd is ook kostbaar.</div>
+            <div class="bubble bot">Nou, ik ben er. Annemarie van Dooren. Kunnen we beginnen? Ik heb wel wat beters te doen dan hier in een muf bureau zitten.</div>
         </div>
         <div class="input-area">
-            <input type="text" id="botInput" style="flex:1; margin-right: 5px;" placeholder="Stel een vraag aan Annemarie..." onkeypress="if(event.key==='Enter') chatWithBot()">
+            <input type="text" id="botInput" style="flex:1; margin-right: 5px;" placeholder="Stel je vraag..." onkeypress="if(event.key==='Enter') chatWithBot()">
             <button id="sendBtn" onclick="chatWithBot()">VRAAG</button>
         </div>
     </div>
 
     <div id="aangifte-section">
         <h2>PV VAN BEVINDINGEN</h2>
-        <textarea id="pvInput" placeholder="Typ hier de feiten uit op basis van het verhoor..."></textarea>
-        <button class="btn-pv" onclick="submitToFirebase()">OPSLAAN IN AANGIFTE</button>
+        <textarea id="pvInput" placeholder="Noteer de feiten: Wie, wat, waar, wanneer, schade..."></textarea>
+        <button class="btn-pv" onclick="submitToFirebase()">OPSLAAN IN DATABASE</button>
         <div id="feed-container" style="flex:1; overflow-y:auto; margin-top:10px;"></div>
         
-        <button class="btn-download" onclick="downloadDossier()">DOWNLOAD ALLE AANGIFTES</button>
-        <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:10px; color: white; border:none; padding:5px; cursor:pointer;">WIS VOLLEDIGE FEED</button>
+        <button class="btn-download" onclick="downloadDossier()">DOWNLOAD DOSSIER (.TXT)</button>
+        <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:10px; color: white; border:none; padding:5px; cursor:pointer;">WIS DATABASE</button>
     </div>
 </div>
 
 <script>
-    // --- FIREBASE SETUP ---
-    // Gecorrigeerde config (accolades en komma's stonden verkeerd)
     const firebaseConfig = {
         apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
         authDomain: "aangifteq2les1.firebaseapp.com",
@@ -77,45 +75,57 @@
     
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
     let localData = {}; 
 
-    // --- ANNEMARIE RESPONSES ---
     const responses = {
         wie: [
-            "Ik ben Annemarie van Dooren. Geboren op 25 november 1995 in Amsterdam. Heb je daar genoeg aan?",
-            "Annemarie van Dooren, 25-11-1995, Amsterdam. Staat ook gewoon in mijn paspoort hoor.",
-            "Ik kom uit Amsterdam, geboren in '95. Mijn naam is Annemarie van Dooren. Kunnen we nu door?"
+            "Mijn naam is Annemarie van Dooren. Ik ben van 25 november 1995. Geboren in Amsterdam. Staat ook in m'n ID-kaart hoor.",
+            "Annemarie van Dooren. 25-11-1995. Amsterdamse. Nog meer administratieve onzin nodig?",
+            "Ik ben Annemarie. Geboren op 25 november '95 in Amsterdam. Kunnen we nu naar de belangrijke zaken?",
+            "Staat gewoon in het systeem toch? Annemarie van Dooren, 25 november 1995, Amsterdam.",
+            "Luister je wel? Annemarie van Dooren, geboren in Amsterdam op de 25e van november 1995."
         ],
         locatie: [
-            "Stationsweg 10, bij station Veenendaal-De Klomp. Aan de taludzijde, precies in het midden van het rek.",
-            "De stalling rechts van de stenen trap naar het Utrecht-perron. Aan de Stationsweg 10.",
-            "Op station Veenendaal-De Klomp dus. In het midden van het rek bij het talud."
+            "Ik had hem bij station Veenendaal-De Klomp gezet. Stationsweg 10. Bij het talud, midden in het rek.",
+            "Stationsweg 10. Dat is die stalling bij De Klomp. Rechts van de trap naar het perron richting Utrecht.",
+            "Station Veenendaal-De Klomp. Hij stond aan de taludzijde, precies in het midden. Niet te missen, zou je denken.",
+            "De stalling rechts van die stenen trap. Stationsweg 10. Daar stond 'ie.",
+            "Gewoon bij het station, Veenendaal-De Klomp. Stationsweg 10. In het middelste rek aan de kant van de helling."
         ],
         tijd: [
-            "Ik was er om 07:05 uur 's ochtends om de trein van 07:07 naar Amsterdam te halen. En om 15:45 uur kwam ik terug bij die puinhoop.",
-            "Heen om vijf over zeven, terug om kwart voor vier 's middags.",
-            "Ik moest de trein van 07:07 hebben, dus ik stond er om 07:05. Toen ik om 15:45 uur terugkwam was die fiets kapot."
+            "Ik zette hem er om 07:05 uur neer voor de trein van 07:07. Om 15:45 uur zag ik de schade.",
+            "Vanaf 07:05 tot 15:45 uur stond 'ie daar. Ik moest die vroege trein van zeven over zeven hebben.",
+            "Gisterochtend om vijf over zeven stond 'ie er nog goed bij. Om kwart voor vier 's middags was het raak.",
+            "Tussen 07:05 en 15:45. Ik was de hele dag in Amsterdam voor m'n werk.",
+            "Vroeg in de ochtend, vijf over zeven. En toen ik om 15:45 terugkwam was het een puinhoop."
         ],
         fiets: [
-            "Een oud model Gazelle. Was 150 euro waard, maar voor mij was hij onbetaalbaar voor mijn woon-werkverkeer.",
-            "Gewoon een Gazelle, oudje. Kostte me 150 euro.",
-            "Merk Gazelle, niks bijzonders maar hij was wel heel. Tot vandaag dan."
+            "Een Gazelle. Oud modelletje, maar hij fietste prima. Ik heb er 150 euro voor betaald.",
+            "Het was een Gazelle. Niks speciaals, 150 euro waard. Maar wel MIJN fiets.",
+            "Gewoon een oude Gazelle. Kostte me 150 euro op Marktplaats.",
+            "Een tweedehands Gazelle. Waarde? 150 euro ongeveer. Maar de ellende is groter.",
+            "Een zwarte Gazelle, oud type. 150 euro was 'ie waard."
         ],
         schade: [
-            "Mijn achterlicht hangt aan één draad en het spatbord is verbogen. Er lagen overal rode scherven op de grond.",
-            "Kapot! Achterlicht verbrijzeld, rode glaskunst op de grond, en dat spatbord is krom.",
-            "Die rode scherven achter mijn fiets zeggen genoeg toch? Achterlicht kapot en spatbord verbogen."
+            "Mijn achterlicht ligt aan gort en het spatbord is helemaal verbogen. Er lagen rode scherven op de grond.",
+            "Achterlicht kapot, spatbord krom. En die rode scherven van m'n lamp lagen achter de fiets.",
+            "Vernield! Achterlicht verbrijzeld en het spatbord is verbogen. Alsof er iemand tegenaan is getrapt.",
+            "Ziet er niet uit. Spatbord krom, achterlicht kapot. De scherven lagen nog op de tegels.",
+            "Achterlicht hangt aan één draadje. Spatbord is verbogen. Iemand heeft m'n fiets gesloopt."
         ],
         slot: [
-            "Hij stond gewoon vast met een kettingslot aan het rek. Dat ding zat hartstikke goed vast.",
-            "Met een kettingslot. Ik zet mijn fiets altijd goed vast.",
-            "Kettingslot aan het rek. Meer kon ik niet doen."
+            "Hij stond met een kettingslot vast aan het rek. Ik ben niet gek, ik zet hem altijd vast.",
+            "Een stevig kettingslot. Die zat gewoon om het rek heen.",
+            "Kettingslot. Dat moet toch genoeg zijn? Blijkbaar niet dus.",
+            "Ik gebruik altijd een kettingslot aan het vaste rek. Hij kon nergens heen.",
+            "Vastgeketend met een kettingslot. Zoals het hoort."
         ],
         onzin: [
-            "Wat is dat voor een domme vraag? Schiet nou eens op.",
-            "Daar heb ik niks over te zeggen. Vraag iets nuttigs.",
-            "Zucht... kunnen we ons bij de feiten houden?"
+            "Wat is dat nou voor een vraag? Heb je wel opgelet?",
+            "Daar heb ik niks over te zeggen. Laten we bij de feiten blijven.",
+            "Zucht... ik wil gewoon dat dit opgelost wordt. Stel normale vragen.",
+            "Geen commentaar. Volgende vraag graag.",
+            "Schiet nou eens op, ik heb nog een afspraak."
         ]
     };
 
@@ -131,22 +141,23 @@
             let reply;
             const getRnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
             
-            if (val.includes("wie") || val.includes("naam") || val.includes("geboren") || val.includes("datum") || val.includes("leeftijd") || val.includes("amsterdam") || val.includes("paspoort")) {
+            // Triggers uitgebreid met meer synoniemen
+            if (val.includes("wie") || val.includes("naam") || val.includes("geboren") || val.includes("leeftijd") || val.includes("amsterdam") || val.includes("id") || val.includes("paspoort") || val.includes("geboorte")) {
                 reply = getRnd(responses.wie);
             }
-            else if (val.includes("waar") || val.includes("locatie") || val.includes("adres") || val.includes("stationsweg") || val.includes("stalling") || val.includes("talud") || val.includes("trap") || val.includes("rek")) {
+            else if (val.includes("waar") || val.includes("locatie") || val.includes("stationsweg") || val.includes("stalling") || val.includes("talud") || val.includes("trap") || val.includes("rek") || val.includes("plek") || val.includes("klomp")) {
                 reply = getRnd(responses.locatie);
             }
-            else if (val.includes("wanneer") || val.includes("tijd") || val.includes("laat") || val.includes("ochtend") || val.includes("middag") || val.includes("trein") || val.includes("kwart voor")) {
+            else if (val.includes("wanneer") || val.includes("tijd") || val.includes("hoe laat") || val.includes("ochtend") || val.includes("middag") || val.includes("trein") || val.includes("datum") || val.includes("dag")) {
                 reply = getRnd(responses.tijd);
             }
-            else if (val.includes("fiets") || val.includes("merk") || val.includes("gazelle") || val.includes("waarde") || val.includes("geld") || val.includes("kost")) {
+            else if (val.includes("fiets") || val.includes("merk") || val.includes("gazelle") || val.includes("waarde") || val.includes("geld") || val.includes("kost") || val.includes("betaald") || val.includes("poet") || val.includes("monies")) {
                 reply = getRnd(responses.fiets);
             }
-            else if (val.includes("schade") || val.includes("kapot") || val.includes("vervangen") || val.includes("licht") || val.includes("spatbord") || val.includes("scherven") || val.includes("glas")) {
+            else if (val.includes("schade") || val.includes("kapot") || val.includes("vervangen") || val.includes("licht") || val.includes("spatbord") || val.includes("scherven") || val.includes("glas") || val.includes("vernield") || val.includes("gesloopt")) {
                 reply = getRnd(responses.schade);
             }
-            else if (val.includes("slot") || val.includes("vast") || val.includes("ketting")) {
+            else if (val.includes("slot") || val.includes("vast") || val.includes("ketting") || val.includes("beveilig")) {
                 reply = getRnd(responses.slot);
             }
             else {
@@ -167,6 +178,7 @@
     }
 
     function speak(text) {
+        window.speechSynthesis.cancel(); // Stop oude spraak
         const msg = new SpeechSynthesisUtterance();
         msg.text = text;
         msg.lang = 'nl-NL';
@@ -180,8 +192,11 @@
         db.ref('posts').push({
             tekst: tekst,
             feedback: "",
-            timestamp: Date.now()
-        }).then(() => { document.getElementById('pvInput').value = ''; });
+            timestamp: new Date().toLocaleString('nl-NL')
+        }).then(() => { 
+            document.getElementById('pvInput').value = '';
+            alert("Opgeslagen in de database!");
+        });
     }
 
     function addFeedback(id) {
@@ -190,27 +205,30 @@
         db.ref('posts/' + id).update({ feedback: fb });
     }
 
-    function clearAll() { if(confirm("Alle aangiftes definitief wissen?")) db.ref('posts').remove(); }
+    function clearAll() { if(confirm("Database volledig wissen?")) db.ref('posts').remove(); }
 
     function downloadDossier() {
         if (!localData || Object.keys(localData).length === 0) {
-            alert("Geen data om te downloaden.");
+            alert("Geen data beschikbaar.");
             return;
         }
-        let content = "VERHOOR DOSSIER - ANNEMARIE VAN DOOREN\n====================================\n\n";
+        let content = "VERHOOR DOSSIER - ANNEMARIE VAN DOOREN\n" + "Gegenereerd op: " + new Date().toLocaleString() + "\n";
+        content += "====================================\n\n";
         Object.keys(localData).forEach((id, index) => {
             const item = localData[id];
-            content += `PV #${index + 1}\nTekst: ${item.tekst}\nFeedback: ${item.feedback || "Geen"}\n\n------------------\n`;
+            content += `VERLAG #${index + 1} (${item.timestamp})\n`;
+            content += `Inhoud: ${item.tekst}\n`;
+            content += `Docent Feedback: ${item.feedback || "Nog geen"}\n`;
+            content += `------------------------------------\n\n`;
         });
         const blob = new Blob([content], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "Dossier_Annemarie.txt";
+        a.download = "Verhoor_Dossier_Annemarie.txt";
         a.click();
     }
 
-    // Luister live naar de database om de feed te vullen
     db.ref('posts').on('value', (snap) => {
         const container = document.getElementById('feed-container');
         container.innerHTML = "<h2>INGELEVERDE VERSLAGEN</h2>";
@@ -221,10 +239,11 @@
                 const div = document.createElement('div');
                 div.className = 'feed-item';
                 div.innerHTML = `
+                    <div style="font-size: 0.7em; color: #888;">${item.timestamp}</div>
                     <div class="pv-text">${item.tekst}</div>
-                    <div class="fb-section">FB: ${item.feedback || 'Nog geen feedback...'}</div>
+                    <div class="fb-section">Feedback: ${item.feedback || 'Nog geen'}</div>
                     <div style="display:flex; gap:5px; margin-top:5px;">
-                        <input type="text" id="fb-in-${id}" placeholder="Geef feedback..." style="font-size:0.7em; flex:1;">
+                        <input type="text" id="fb-in-${id}" placeholder="Docent feedback..." style="font-size:0.7em; flex:1;">
                         <button onclick="addFeedback('${id}')" style="font-size:0.6em; background:#34495e; color:white; border:none; padding:4px;">OK</button>
                     </div>
                 `;
