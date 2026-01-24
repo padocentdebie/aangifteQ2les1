@@ -64,47 +64,52 @@
 
 <script>
     // --- FIREBASE SETUP ---
+    // Gecorrigeerde config (accolades en komma's stonden verkeerd)
     const firebaseConfig = {
-        apiKey: "AIzaSyC-Of0AUOd-kVo2RKxYc-68Gr-RO4HdRk0",
-        authDomain: "q2aangifteles2.firebaseapp.com",
-        databaseURL: "https://q2aangifteles2-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "q2aangifteles2"
+        apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
+        authDomain: "aangifteq2les1.firebaseapp.com",
+        projectId: "aangifteq2les1",
+        storageBucket: "aangifteq2les1.firebasestorage.app",
+        messagingSenderId: "1071661084879",
+        appId: "1:1071661084879:web:ec81dfed806ad75a8847ba",
+        databaseURL: "https://aangifteq2les1-default-rtdb.europe-west1.firebasedatabase.app/"
     };
+    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let localData = {}; 
 
-    // --- ANNEMARIE RESPONSES (CHAGRIJNIG & DETAILGERICHT) ---
+    // --- ANNEMARIE RESPONSES ---
     const responses = {
         wie: [
             "Ik ben Annemarie van Dooren. Geboren op 25 november 1995 in Amsterdam. Heb je daar genoeg aan?",
-            "Annemarie van Dooren, 25-11-1995, Amsterdam. Staat ook gewoon in mijn paspoort hoor, als je dat tenminste kunt lezen.",
+            "Annemarie van Dooren, 25-11-1995, Amsterdam. Staat ook gewoon in mijn paspoort hoor.",
             "Ik kom uit Amsterdam, geboren in '95. Mijn naam is Annemarie van Dooren. Kunnen we nu door?"
         ],
         locatie: [
             "Stationsweg 10, bij station Veenendaal-De Klomp. Aan de taludzijde, precies in het midden van het rek.",
-            "De stalling rechts van de stenen trap naar het Utrecht-perron. Aan de Stationsweg 10. Hoe vaak moet ik het zeggen?",
-            "Op station Veenendaal-De Klomp dus. In het midden van het rek bij het talud. Zoek het anders zelf uit."
+            "De stalling rechts van de stenen trap naar het Utrecht-perron. Aan de Stationsweg 10.",
+            "Op station Veenendaal-De Klomp dus. In het midden van het rek bij het talud."
         ],
         tijd: [
             "Ik was er om 07:05 uur 's ochtends om de trein van 07:07 naar Amsterdam te halen. En om 15:45 uur kwam ik terug bij die puinhoop.",
-            "Heen om vijf over zeven, terug om kwart voor vier 's middags. Duidelijk genoeg?",
+            "Heen om vijf over zeven, terug om kwart voor vier 's middags.",
             "Ik moest de trein van 07:07 hebben, dus ik stond er om 07:05. Toen ik om 15:45 uur terugkwam was die fiets kapot."
         ],
         fiets: [
             "Een oud model Gazelle. Was 150 euro waard, maar voor mij was hij onbetaalbaar voor mijn woon-werkverkeer.",
-            "Gewoon een Gazelle, oudje. Kostte me 150 euro. Het gaat om het principe!",
+            "Gewoon een Gazelle, oudje. Kostte me 150 euro.",
             "Merk Gazelle, niks bijzonders maar hij was wel heel. Tot vandaag dan."
         ],
         schade: [
             "Mijn achterlicht hangt aan één draad en het spatbord is verbogen. Er lagen overal rode scherven op de grond.",
-            "Kapot! Achterlicht verbrijzeld, rode glaskunst op de grond, en dat spatbord is krom als een hoepel.",
+            "Kapot! Achterlicht verbrijzeld, rode glaskunst op de grond, en dat spatbord is krom.",
             "Die rode scherven achter mijn fiets zeggen genoeg toch? Achterlicht kapot en spatbord verbogen."
         ],
         slot: [
             "Hij stond gewoon vast met een kettingslot aan het rek. Dat ding zat hartstikke goed vast.",
-            "Met een kettingslot. Ik ben niet achterlijk, ik zet mijn fiets altijd goed vast.",
+            "Met een kettingslot. Ik zet mijn fiets altijd goed vast.",
             "Kettingslot aan het rek. Meer kon ik niet doen."
         ],
         onzin: [
@@ -114,7 +119,6 @@
         ]
     };
 
-    // --- CHAT FUNCTIE ---
     function chatWithBot() {
         const input = document.getElementById('botInput');
         const val = input.value.trim().toLowerCase();
@@ -127,7 +131,6 @@
             let reply;
             const getRnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
             
-            // Uitgebreide triggers
             if (val.includes("wie") || val.includes("naam") || val.includes("geboren") || val.includes("datum") || val.includes("leeftijd") || val.includes("amsterdam") || val.includes("paspoort")) {
                 reply = getRnd(responses.wie);
             }
@@ -167,11 +170,10 @@
         const msg = new SpeechSynthesisUtterance();
         msg.text = text;
         msg.lang = 'nl-NL';
-        msg.pitch = 0.7; // Lekker chagrijnig
+        msg.pitch = 0.7; 
         window.speechSynthesis.speak(msg);
     }
 
-    // --- AANGIFTE FUNCTIES ---
     function submitToFirebase() {
         const tekst = document.getElementById('pvInput').value.trim();
         if(!tekst) return;
@@ -192,5 +194,44 @@
 
     function downloadDossier() {
         if (!localData || Object.keys(localData).length === 0) {
-            alert("Geen data.");
+            alert("Geen data om te downloaden.");
             return;
+        }
+        let content = "VERHOOR DOSSIER - ANNEMARIE VAN DOOREN\n====================================\n\n";
+        Object.keys(localData).forEach((id, index) => {
+            const item = localData[id];
+            content += `PV #${index + 1}\nTekst: ${item.tekst}\nFeedback: ${item.feedback || "Geen"}\n\n------------------\n`;
+        });
+        const blob = new Blob([content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Dossier_Annemarie.txt";
+        a.click();
+    }
+
+    // Luister live naar de database om de feed te vullen
+    db.ref('posts').on('value', (snap) => {
+        const container = document.getElementById('feed-container');
+        container.innerHTML = "<h2>INGELEVERDE VERSLAGEN</h2>";
+        localData = snap.val();
+        if(localData) {
+            Object.keys(localData).reverse().forEach(id => {
+                const item = localData[id];
+                const div = document.createElement('div');
+                div.className = 'feed-item';
+                div.innerHTML = `
+                    <div class="pv-text">${item.tekst}</div>
+                    <div class="fb-section">FB: ${item.feedback || 'Nog geen feedback...'}</div>
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <input type="text" id="fb-in-${id}" placeholder="Geef feedback..." style="font-size:0.7em; flex:1;">
+                        <button onclick="addFeedback('${id}')" style="font-size:0.6em; background:#34495e; color:white; border:none; padding:4px;">OK</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+    });
+</script>
+</body>
+</html>
