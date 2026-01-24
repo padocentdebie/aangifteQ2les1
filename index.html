@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Aangifte Systeem v2.0 - Annemarie van Dooren</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        body { background-color: #0a0e14; color: #d1d1d1; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        .main-wrapper { display: flex; gap: 20px; max-width: 1300px; margin: auto; flex-wrap: wrap; height: 90vh; }
+        
+        #chat-section { flex: 1; min-width: 350px; background: #1c222d; border: 2px solid #c0392b; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; }
+        #chat-header { padding: 15px; background: #c0392b; color: white; text-align: center; font-weight: bold; }
+        #messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f4f7f6; }
+        
+        #aangifte-section { flex: 1.2; min-width: 400px; background: #ffffff; border: 2px solid #bdc3c7; display: flex; flex-direction: column; padding: 15px; border-radius: 8px; color: #333; }
+        
+        .bubble { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 0.95em; line-height: 1.4; animation: fadeIn 0.3s; }
+        .bot { align-self: flex-start; background: #e8e8e8; color: #2c3e50; border-bottom-left-radius: 2px; }
+        .user-msg { align-self: flex-end; background: #c0392b; color: white; border-bottom-right-radius: 2px; }
+        
+        .feed-item { background: #f9f9f9; border: 1px solid #ddd; padding: 12px; margin-top: 15px; border-radius: 8px; }
+        .pv-text { color: #2c3e50; white-space: pre-wrap; margin-bottom: 8px; font-size: 0.9em; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .fb-section { color: #d35400; font-size: 0.85em; font-weight: bold; }
+
+        .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
+        input[type="text"], textarea { background: #fff; border: 1px solid #ccc; color: #333; padding: 10px; border-radius: 4px; }
+        textarea { width: 100%; min-height: 120px; box-sizing: border-box; border: 2px solid #c0392b; margin-bottom: 10px; }
+        
+        button { background: #c0392b; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        .btn-pv { background: #27ae60; width: 100%; font-size: 1.1em; }
+        .btn-download { background: #e67e22; margin-top: 10px; width: 100%; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        h2 { margin-top: 0; font-size: 1.2em; color: #c0392b; }
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper">
+    <div id="chat-section">
+        <div id="chat-header">AANGIFTE: ANNEMARIE VAN DOOREN</div>
+        <div id="messages">
+            <div class="bubble bot">Ik ben Annemarie van Dooren. Schiet maar op met die vragen, ik heb hier helemaal geen zin in. Mijn tijd is ook kostbaar.</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="botInput" style="flex:1; margin-right: 5px;" placeholder="Stel een vraag aan Annemarie..." onkeypress="if(event.key==='Enter') chatWithBot()">
+            <button id="sendBtn" onclick="chatWithBot()">VRAAG</button>
+        </div>
+    </div>
+
+    <div id="aangifte-section">
+        <h2>PV VAN BEVINDINGEN</h2>
+        <textarea id="pvInput" placeholder="Typ hier de feiten uit op basis van het verhoor..."></textarea>
+        <button class="btn-pv" onclick="submitToFirebase()">OPSLAAN IN AANGIFTE</button>
+        <div id="feed-container" style="flex:1; overflow-y:auto; margin-top:10px;"></div>
+        
+        <button class="btn-download" onclick="downloadDossier()">DOWNLOAD ALLE AANGIFTES</button>
+        <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:10px; color: white; border:none; padding:5px; cursor:pointer;">WIS VOLLEDIGE FEED</button>
+    </div>
+</div>
+
+<script>
+    // --- FIREBASE SETUP ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyC-Of0AUOd-kVo2RKxYc-68Gr-RO4HdRk0",
+        authDomain: "q2aangifteles2.firebaseapp.com",
+        databaseURL: "https://q2aangifteles2-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "q2aangifteles2"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let localData = {}; 
+
+    // --- ANNEMARIE RESPONSES (CHAGRIJNIG & DETAILGERICHT) ---
+    const responses = {
+        wie: [
+            "Ik ben Annemarie van Dooren. Geboren op 25 november 1995 in Amsterdam. Heb je daar genoeg aan?",
+            "Annemarie van Dooren, 25-11-1995, Amsterdam. Staat ook gewoon in mijn paspoort hoor, als je dat tenminste kunt lezen.",
+            "Ik kom uit Amsterdam, geboren in '95. Mijn naam is Annemarie van Dooren. Kunnen we nu door?"
+        ],
+        locatie: [
+            "Stationsweg 10, bij station Veenendaal-De Klomp. Aan de taludzijde, precies in het midden van het rek.",
+            "De stalling rechts van de stenen trap naar het Utrecht-perron. Aan de Stationsweg 10. Hoe vaak moet ik het zeggen?",
+            "Op station Veenendaal-De Klomp dus. In het midden van het rek bij het talud. Zoek het anders zelf uit."
+        ],
+        tijd: [
+            "Ik was er om 07:05 uur 's ochtends om de trein van 07:07 naar Amsterdam te halen. En om 15:45 uur kwam ik terug bij die puinhoop.",
+            "Heen om vijf over zeven, terug om kwart voor vier 's middags. Duidelijk genoeg?",
+            "Ik moest de trein van 07:07 hebben, dus ik stond er om 07:05. Toen ik om 15:45 uur terugkwam was die fiets kapot."
+        ],
+        fiets: [
+            "Een oud model Gazelle. Was 150 euro waard, maar voor mij was hij onbetaalbaar voor mijn woon-werkverkeer.",
+            "Gewoon een Gazelle, oudje. Kostte me 150 euro. Het gaat om het principe!",
+            "Merk Gazelle, niks bijzonders maar hij was wel heel. Tot vandaag dan."
+        ],
+        schade: [
+            "Mijn achterlicht hangt aan één draad en het spatbord is verbogen. Er lagen overal rode scherven op de grond.",
+            "Kapot! Achterlicht verbrijzeld, rode glaskunst op de grond, en dat spatbord is krom als een hoepel.",
+            "Die rode scherven achter mijn fiets zeggen genoeg toch? Achterlicht kapot en spatbord verbogen."
+        ],
+        slot: [
+            "Hij stond gewoon vast met een kettingslot aan het rek. Dat ding zat hartstikke goed vast.",
+            "Met een kettingslot. Ik ben niet achterlijk, ik zet mijn fiets altijd goed vast.",
+            "Kettingslot aan het rek. Meer kon ik niet doen."
+        ],
+        onzin: [
+            "Wat is dat voor een domme vraag? Schiet nou eens op.",
+            "Daar heb ik niks over te zeggen. Vraag iets nuttigs.",
+            "Zucht... kunnen we ons bij de feiten houden?"
+        ]
+    };
+
+    // --- CHAT FUNCTIE ---
+    function chatWithBot() {
+        const input = document.getElementById('botInput');
+        const val = input.value.trim().toLowerCase();
+        if(!val) return;
+
+        addBubble(input.value, 'user-msg');
+        input.value = '';
+
+        setTimeout(() => {
+            let reply;
+            const getRnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
+            
+            // Uitgebreide triggers
+            if (val.includes("wie") || val.includes("naam") || val.includes("geboren") || val.includes("datum") || val.includes("leeftijd") || val.includes("amsterdam") || val.includes("paspoort")) {
+                reply = getRnd(responses.wie);
+            }
+            else if (val.includes("waar") || val.includes("locatie") || val.includes("adres") || val.includes("stationsweg") || val.includes("stalling") || val.includes("talud") || val.includes("trap") || val.includes("rek")) {
+                reply = getRnd(responses.locatie);
+            }
+            else if (val.includes("wanneer") || val.includes("tijd") || val.includes("laat") || val.includes("ochtend") || val.includes("middag") || val.includes("trein") || val.includes("kwart voor")) {
+                reply = getRnd(responses.tijd);
+            }
+            else if (val.includes("fiets") || val.includes("merk") || val.includes("gazelle") || val.includes("waarde") || val.includes("geld") || val.includes("kost")) {
+                reply = getRnd(responses.fiets);
+            }
+            else if (val.includes("schade") || val.includes("kapot") || val.includes("vervangen") || val.includes("licht") || val.includes("spatbord") || val.includes("scherven") || val.includes("glas")) {
+                reply = getRnd(responses.schade);
+            }
+            else if (val.includes("slot") || val.includes("vast") || val.includes("ketting")) {
+                reply = getRnd(responses.slot);
+            }
+            else {
+                reply = getRnd(responses.onzin);
+            }
+            addBubble(reply, 'bot');
+            speak(reply);
+        }, 600);
+    }
+
+    function addBubble(text, side) {
+        const div = document.createElement('div');
+        div.className = `bubble ${side}`;
+        div.innerText = text;
+        const msgContainer = document.getElementById('messages');
+        msgContainer.appendChild(div);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
+
+    function speak(text) {
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = text;
+        msg.lang = 'nl-NL';
+        msg.pitch = 0.7; // Lekker chagrijnig
+        window.speechSynthesis.speak(msg);
+    }
+
+    // --- AANGIFTE FUNCTIES ---
+    function submitToFirebase() {
+        const tekst = document.getElementById('pvInput').value.trim();
+        if(!tekst) return;
+        db.ref('posts').push({
+            tekst: tekst,
+            feedback: "",
+            timestamp: Date.now()
+        }).then(() => { document.getElementById('pvInput').value = ''; });
+    }
+
+    function addFeedback(id) {
+        const fb = document.getElementById('fb-in-'+id).value;
+        if(!fb) return;
+        db.ref('posts/' + id).update({ feedback: fb });
+    }
+
+    function clearAll() { if(confirm("Alle aangiftes definitief wissen?")) db.ref('posts').remove(); }
+
+    function downloadDossier() {
+        if (!localData || Object.keys(localData).length === 0) {
+            alert("Geen data.");
+            return;
