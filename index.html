@@ -2,10 +2,11 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Aangifte Systeem v2.0 - Annemarie van Dooren</title>
+    <title>Aangifte Systeem v2.0 - Verhoor Annemarie</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         body { background-color: #0a0e14; color: #d1d1d1; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
@@ -17,7 +18,7 @@
         
         #aangifte-section { flex: 1.2; min-width: 400px; background: #ffffff; border: 2px solid #bdc3c7; display: flex; flex-direction: column; padding: 15px; border-radius: 8px; color: #333; }
         
-        .bubble { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 0.95em; line-height: 1.4; animation: fadeIn 0.3s; }
+        .bubble { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 0.95em; line-height: 1.4; animation: fadeIn 0.3s; position: relative; }
         .bot { align-self: flex-start; background: #e8e8e8; color: #2c3e50; border-bottom-left-radius: 2px; }
         .user-msg { align-self: flex-end; background: #c0392b; color: white; border-bottom-right-radius: 2px; }
         
@@ -29,9 +30,10 @@
         input[type="text"], textarea { background: #fff; border: 1px solid #ccc; color: #333; padding: 10px; border-radius: 4px; }
         textarea { width: 100%; min-height: 120px; box-sizing: border-box; border: 2px solid #c0392b; margin-bottom: 10px; }
         
-        button { background: #c0392b; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        button { background: #c0392b; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        button:hover { background: #a93226; }
         .btn-pv { background: #27ae60; width: 100%; font-size: 1.1em; }
-        .btn-download { background: #e67e22; margin-top: 10px; width: 100%; }
+        .btn-download { background: #2980b9; margin-top: 10px; width: 100%; }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         h2 { margin-top: 0; font-size: 1.2em; color: #c0392b; }
@@ -46,23 +48,27 @@
             <div class="bubble bot">Nou, ik ben er. Annemarie van Dooren. Kunnen we beginnen? Ik heb wel wat beters te doen dan hier in een muf bureau zitten.</div>
         </div>
         <div class="input-area">
-            <input type="text" id="botInput" style="flex:1; margin-right: 5px;" placeholder="Stel je vraag..." onkeypress="if(event.key==='Enter') chatWithBot()">
+            <input type="text" id="botInput" style="flex:1; margin-right: 5px;" placeholder="Stel je vraag aan de verdachte..." onkeypress="if(event.key==='Enter') chatWithBot()">
             <button id="sendBtn" onclick="chatWithBot()">VRAAG</button>
         </div>
     </div>
 
     <div id="aangifte-section">
-        <h2>PV VAN BEVINDINGEN</h2>
-        <textarea id="pvInput" placeholder="Noteer de feiten: Wie, wat, waar, wanneer, schade..."></textarea>
-        <button class="btn-pv" onclick="submitToFirebase()">OPSLAAN IN DATABASE</button>
-        <div id="feed-container" style="flex:1; overflow-y:auto; margin-top:10px;"></div>
+        <div id="pdf-content">
+            <h2>PV VAN BEVINDINGEN</h2>
+            <p style="font-size: 0.8em; color: #666;">Dossiernummer: #AVD-2024-99</p>
+            <textarea id="pvInput" placeholder="Noteer de feiten: Wie, wat, waar, wanneer, schade..."></textarea>
+            <div id="feed-container"></div>
+        </div>
         
-        <button class="btn-download" onclick="downloadDossier()">DOWNLOAD DOSSIER (.TXT)</button>
+        <button class="btn-pv" onclick="submitToFirebase()">OPSLAAN IN DATABASE</button>
+        <button class="btn-download" onclick="downloadPDF()">DOWNLOAD ALS PDF</button>
         <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:10px; color: white; border:none; padding:5px; cursor:pointer;">WIS DATABASE</button>
     </div>
 </div>
 
 <script>
+    // Firebase Configuratie
     const firebaseConfig = {
         apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
         authDomain: "aangifteq2les1.firebaseapp.com",
@@ -77,56 +83,30 @@
     const db = firebase.database();
     let localData = {}; 
 
+    // Bot Logica variabelen
+    let askCount = { wie: 0, locatie: 0, tijd: 0, fiets: 0, schade: 0 };
+
     const responses = {
-        wie: [
-            "Mijn naam is Annemarie van Dooren. Ik ben van 25 november 1995. Geboren in Amsterdam. Staat ook in m'n ID-kaart hoor.",
-            "Annemarie van Dooren. 25-11-1995. Amsterdamse. Nog meer administratieve onzin nodig?",
-            "Ik ben Annemarie. Geboren op 25 november '95 in Amsterdam. Kunnen we nu naar de belangrijke zaken?",
-            "Staat gewoon in het systeem toch? Annemarie van Dooren, 25 november 1995, Amsterdam.",
-            "Luister je wel? Annemarie van Dooren, geboren in Amsterdam op de 25e van november 1995."
-        ],
+        wie: ["Annemarie van Dooren. Geboren 25-11-1995 in Amsterdam. Heb je m'n ID niet al lang gekopieerd?", "Annemarie van Dooren, zeg ik toch."],
         locatie: [
-            "Ik had hem bij station Veenendaal-De Klomp gezet. Stationsweg 10. Bij het talud, midden in het rek.",
-            "Stationsweg 10. Dat is die stalling bij De Klomp. Rechts van de trap naar het perron richting Utrecht.",
-            "Station Veenendaal-De Klomp. Hij stond aan de taludzijde, precies in het midden. Niet te missen, zou je denken.",
-            "De stalling rechts van die stenen trap. Stationsweg 10. Daar stond 'ie.",
-            "Gewoon bij het station, Veenendaal-De Klomp. Stationsweg 10. In het middelste rek aan de kant van de helling."
+            "Bij station Veenendaal-De Klomp, Stationsweg 10. In het rek bij het talud.", // Eerste keer
+            "Euhm, nu je het vraagt... misschien was het toch iets meer naar links, bij de stenen trap?", // Tweede keer (tegenstrijdig)
+            "Ik weet het niet meer precies hoor! Het was die stalling bij De Klomp. Punt." // Derde keer
         ],
         tijd: [
-            "Ik zette hem er om 07:05 uur neer voor de trein van 07:07. Om 15:45 uur zag ik de schade.",
-            "Vanaf 07:05 tot 15:45 uur stond 'ie daar. Ik moest die vroege trein van zeven over zeven hebben.",
-            "Gisterochtend om vijf over zeven stond 'ie er nog goed bij. Om kwart voor vier 's middags was het raak.",
-            "Tussen 07:05 en 15:45. Ik was de hele dag in Amsterdam voor m'n werk.",
-            "Vroeg in de ochtend, vijf over zeven. En toen ik om 15:45 terugkwam was het een puinhoop."
+            "Ik zette hem er om 07:05 uur neer. De trein ging namelijk om 07:07.", 
+            "Wacht even... het kan ook 07:15 zijn geweest. Ik had nogal haast.",
+            "Waarom die details? Rond zeven uur! Het was gewoon ochtend."
         ],
-        fiets: [
-            "Een Gazelle. Oud modelletje, maar hij fietste prima. Ik heb er 150 euro voor betaald.",
-            "Het was een Gazelle. Niks speciaals, 150 euro waard. Maar wel MIJN fiets.",
-            "Gewoon een oude Gazelle. Kostte me 150 euro op Marktplaats.",
-            "Een tweedehands Gazelle. Waarde? 150 euro ongeveer. Maar de ellende is groter.",
-            "Een zwarte Gazelle, oud type. 150 euro was 'ie waard."
+        fiets: ["Een zwarte Gazelle. Oudje, 150 euro waard.", "Gewoon een Gazelle. Niks speciaals."],
+        schade: ["Achterlicht kapot, spatbord krom. Er lagen rode scherven op de grond.", "Het hele achterlicht is verbrijzeld. Spatbord verbogen."],
+        slot: ["Hij stond met een kettingslot vast aan het rek. Ik ben niet gek."],
+        confrontatie: [
+            "(Zucht) Oké, je hebt me. Ik haal de tijden een beetje door elkaar door de stress. Laten we die eerste tijd maar aanhouden.",
+            "Ja, scherp van je. Ik ben een beetje in de war. Sorry.",
+            "Nou en? Ik ben ook maar een mens. Ik weet het gewoon niet meer zeker."
         ],
-        schade: [
-            "Mijn achterlicht ligt aan gort en het spatbord is helemaal verbogen. Er lagen rode scherven op de grond.",
-            "Achterlicht kapot, spatbord krom. En die rode scherven van m'n lamp lagen achter de fiets.",
-            "Vernield! Achterlicht verbrijzeld en het spatbord is verbogen. Alsof er iemand tegenaan is getrapt.",
-            "Ziet er niet uit. Spatbord krom, achterlicht kapot. De scherven lagen nog op de tegels.",
-            "Achterlicht hangt aan één draadje. Spatbord is verbogen. Iemand heeft m'n fiets gesloopt."
-        ],
-        slot: [
-            "Hij stond met een kettingslot vast aan het rek. Ik ben niet gek, ik zet hem altijd vast.",
-            "Een stevig kettingslot. Die zat gewoon om het rek heen.",
-            "Kettingslot. Dat moet toch genoeg zijn? Blijkbaar niet dus.",
-            "Ik gebruik altijd een kettingslot aan het vaste rek. Hij kon nergens heen.",
-            "Vastgeketend met een kettingslot. Zoals het hoort."
-        ],
-        onzin: [
-            "Wat is dat nou voor een vraag? Heb je wel opgelet?",
-            "Daar heb ik niks over te zeggen. Laten we bij de feiten blijven.",
-            "Zucht... ik wil gewoon dat dit opgelost wordt. Stel normale vragen.",
-            "Geen commentaar. Volgende vraag graag.",
-            "Schiet nou eens op, ik heb nog een afspraak."
-        ]
+        onzin: ["Wat is dat voor een vraag?", "Kunnen we bij de feiten blijven?", "Geen commentaar."]
     };
 
     function chatWithBot() {
@@ -141,28 +121,35 @@
             let reply;
             const getRnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
             
-            // Triggers uitgebreid met meer synoniemen
-            if (val.includes("wie") || val.includes("naam") || val.includes("geboren") || val.includes("leeftijd") || val.includes("amsterdam") || val.includes("id") || val.includes("paspoort") || val.includes("geboorte")) {
-                reply = getRnd(responses.wie);
+            // Logica voor tegenstrijdigheden en triggers
+            if (val.includes("fout") || val.includes("eerst zei je") || val.includes("klopt niet") || val.includes("verkeerd")) {
+                reply = getRnd(responses.confrontatie);
             }
-            else if (val.includes("waar") || val.includes("locatie") || val.includes("stationsweg") || val.includes("stalling") || val.includes("talud") || val.includes("trap") || val.includes("rek") || val.includes("plek") || val.includes("klomp")) {
-                reply = getRnd(responses.locatie);
+            else if (val.includes("wie") || val.includes("naam")) {
+                reply = responses.wie[askCount.wie] || responses.wie[0];
+                askCount.wie++;
             }
-            else if (val.includes("wanneer") || val.includes("tijd") || val.includes("hoe laat") || val.includes("ochtend") || val.includes("middag") || val.includes("trein") || val.includes("datum") || val.includes("dag")) {
-                reply = getRnd(responses.tijd);
+            else if (val.includes("waar") || val.includes("locatie") || val.includes("stalling")) {
+                reply = responses.locatie[askCount.locatie] || responses.locatie[2];
+                askCount.locatie++;
             }
-            else if (val.includes("fiets") || val.includes("merk") || val.includes("gazelle") || val.includes("waarde") || val.includes("geld") || val.includes("kost") || val.includes("betaald") || val.includes("poet") || val.includes("monies")) {
+            else if (val.includes("wanneer") || val.includes("tijd") || val.includes("hoe laat")) {
+                reply = responses.tijd[askCount.tijd] || responses.tijd[2];
+                askCount.tijd++;
+            }
+            else if (val.includes("fiets") || val.includes("gazelle")) {
                 reply = getRnd(responses.fiets);
             }
-            else if (val.includes("schade") || val.includes("kapot") || val.includes("vervangen") || val.includes("licht") || val.includes("spatbord") || val.includes("scherven") || val.includes("glas") || val.includes("vernield") || val.includes("gesloopt")) {
+            else if (val.includes("schade") || val.includes("kapot")) {
                 reply = getRnd(responses.schade);
             }
-            else if (val.includes("slot") || val.includes("vast") || val.includes("ketting") || val.includes("beveilig")) {
+            else if (val.includes("slot")) {
                 reply = getRnd(responses.slot);
             }
             else {
                 reply = getRnd(responses.onzin);
             }
+
             addBubble(reply, 'bot');
             speak(reply);
         }, 600);
@@ -178,14 +165,15 @@
     }
 
     function speak(text) {
-        window.speechSynthesis.cancel(); // Stop oude spraak
+        window.speechSynthesis.cancel();
         const msg = new SpeechSynthesisUtterance();
         msg.text = text;
         msg.lang = 'nl-NL';
-        msg.pitch = 0.7; 
+        msg.pitch = 0.8; 
         window.speechSynthesis.speak(msg);
     }
 
+    // Firebase Functies
     function submitToFirebase() {
         const tekst = document.getElementById('pvInput').value.trim();
         if(!tekst) return;
@@ -195,7 +183,7 @@
             timestamp: new Date().toLocaleString('nl-NL')
         }).then(() => { 
             document.getElementById('pvInput').value = '';
-            alert("Opgeslagen in de database!");
+            alert("Opgeslagen!");
         });
     }
 
@@ -207,31 +195,23 @@
 
     function clearAll() { if(confirm("Database volledig wissen?")) db.ref('posts').remove(); }
 
-    function downloadDossier() {
-        if (!localData || Object.keys(localData).length === 0) {
-            alert("Geen data beschikbaar.");
-            return;
-        }
-        let content = "VERHOOR DOSSIER - ANNEMARIE VAN DOOREN\n" + "Gegenereerd op: " + new Date().toLocaleString() + "\n";
-        content += "====================================\n\n";
-        Object.keys(localData).forEach((id, index) => {
-            const item = localData[id];
-            content += `VERLAG #${index + 1} (${item.timestamp})\n`;
-            content += `Inhoud: ${item.tekst}\n`;
-            content += `Docent Feedback: ${item.feedback || "Nog geen"}\n`;
-            content += `------------------------------------\n\n`;
-        });
-        const blob = new Blob([content], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "Verhoor_Dossier_Annemarie.txt";
-        a.click();
+    // PDF Functie
+    function downloadPDF() {
+        const element = document.getElementById('pdf-content');
+        const opt = {
+            margin:       10,
+            filename:     'Verhoor_Annemarie_Dossier.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
     }
 
+    // Real-time Database sync
     db.ref('posts').on('value', (snap) => {
         const container = document.getElementById('feed-container');
-        container.innerHTML = "<h2>INGELEVERDE VERSLAGEN</h2>";
+        container.innerHTML = "<h3>VERSLAGEN</h3>";
         localData = snap.val();
         if(localData) {
             Object.keys(localData).reverse().forEach(id => {
@@ -241,10 +221,10 @@
                 div.innerHTML = `
                     <div style="font-size: 0.7em; color: #888;">${item.timestamp}</div>
                     <div class="pv-text">${item.tekst}</div>
-                    <div class="fb-section">Feedback: ${item.feedback || 'Nog geen'}</div>
+                    <div class="fb-section">Feedback: ${item.feedback || 'Geen'}</div>
                     <div style="display:flex; gap:5px; margin-top:5px;">
-                        <input type="text" id="fb-in-${id}" placeholder="Docent feedback..." style="font-size:0.7em; flex:1;">
-                        <button onclick="addFeedback('${id}')" style="font-size:0.6em; background:#34495e; color:white; border:none; padding:4px;">OK</button>
+                        <input type="text" id="fb-in-${id}" placeholder="Feedback..." style="font-size:0.7em; flex:1;">
+                        <button onclick="addFeedback('${id}')" style="font-size:0.6em; background:#34495e;">OK</button>
                     </div>
                 `;
                 container.appendChild(div);
