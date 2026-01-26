@@ -9,7 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        /* Basis layout fixes */
         body { 
             background-color: #0a0e14; 
             color: #d1d1d1; 
@@ -17,8 +16,8 @@
             margin: 0; 
             padding: 20px; 
             height: 100vh; 
+            overflow: hidden; 
             box-sizing: border-box;
-            overflow: hidden; /* Voorkomt scrollen van de hele pagina */
         }
 
         .main-wrapper { 
@@ -26,10 +25,10 @@
             gap: 20px; 
             max-width: 1400px; 
             margin: auto; 
-            height: calc(100vh - 40px); /* Vult precies het scherm */
+            height: calc(100vh - 40px); 
         }
         
-        /* Chat Sectie (Links) */
+        /* Linkerkolom: Chat */
         #chat-section { 
             flex: 1; 
             min-width: 350px; 
@@ -51,7 +50,7 @@
             background: #f4f7f6; 
         }
         
-        /* Aangifte Sectie (Rechts) */
+        /* Rechterkolom: Aangifte */
         #aangifte-section { 
             flex: 1.2; 
             min-width: 400px; 
@@ -62,39 +61,36 @@
             padding: 20px; 
             border-radius: 8px; 
             color: #333;
-            overflow: hidden; /* Houdt de sectie zelf op zijn plek */
+            overflow: hidden; 
         }
 
-        /* PDF inhoud en scroll-gebied */
+        /* Scrollgebied voor teksten */
         #scroll-area {
             flex: 1;
-            overflow-y: auto; /* Alleen de teksten en invoer scrollen */
-            padding-right: 10px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding-right: 5px;
         }
         
-        /* Bubbles */
         .bubble { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 0.95em; line-height: 1.4; animation: fadeIn 0.3s; }
         .bot { align-self: flex-start; background: #e8e8e8; color: #2c3e50; border-bottom-left-radius: 2px; }
         .user-msg { align-self: flex-end; background: #c0392b; color: white; border-bottom-right-radius: 2px; }
         
-        /* Verslagen en Inputs */
         .feed-item { background: #f9f9f9; border: 1px solid #ddd; padding: 12px; margin-top: 15px; border-radius: 8px; }
         .pv-text { color: #2c3e50; white-space: pre-wrap; margin-bottom: 8px; font-size: 0.9em; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .fb-section { color: #d35400; font-size: 0.85em; font-weight: bold; }
-
-        .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
-        textarea { width: 100%; min-height: 120px; box-sizing: border-box; border: 2px solid #c0392b; margin-bottom: 15px; padding: 10px; border-radius: 4px; resize: none; }
         
-        /* Knoppen onderaan gefixeerd */
-        .action-container {
-            padding-top: 15px;
+        .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
+        textarea { width: 100%; min-height: 100px; box-sizing: border-box; border: 2px solid #c0392b; margin-bottom: 10px; padding: 10px; border-radius: 4px; resize: none; }
+        
+        /* Knoppencontainer onderaan */
+        .button-bar {
             border-top: 1px solid #eee;
-            background: #fff;
+            padding-top: 10px;
         }
         
         button { background: #c0392b; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
         button:hover { background: #a93226; }
-        .btn-pv { background: #27ae60; width: 100%; font-size: 1.1em; margin-bottom: 8px; }
+        .btn-pv { background: #27ae60; width: 100%; font-size: 1.1em; margin-bottom: 5px; }
         .btn-download { background: #2980b9; width: 100%; }
         
         #chat-header { padding: 15px; background: #c0392b; color: white; text-align: center; font-weight: bold; }
@@ -108,10 +104,10 @@
     <div id="chat-section">
         <div id="chat-header">VERHOOR: ANNEMARIE VAN DOOREN</div>
         <div id="messages">
-            <div class="bubble bot">Nou, ik ben er. Annemarie van Dooren. Laten we het kort houden, ik wil naar huis.</div>
+            <div class="bubble bot">Hé. Ik ben Annemarie. Laten we dit even snel regelen, want ik baal hier flink van. Wat wil je weten?</div>
         </div>
         <div class="input-area">
-            <input type="text" id="botInput" style="flex:1; margin-right: 5px; padding: 10px;" placeholder="Stel een vraag..." onkeypress="if(event.key==='Enter') chatWithBot()">
+            <input type="text" id="botInput" style="flex:1; margin-right: 5px; padding: 10px;" placeholder="Stel je vraag..." onkeypress="if(event.key==='Enter') chatWithBot()">
             <button id="sendBtn" onclick="chatWithBot()">VRAAG</button>
         </div>
     </div>
@@ -126,16 +122,15 @@
             </div>
         </div>
         
-        <div class="action-container">
+        <div class="button-bar">
             <button class="btn-pv" onclick="submitToFirebase()">OPSLAAN IN DATABASE</button>
             <button class="btn-download" onclick="downloadPDF()">DOWNLOAD ALS PDF</button>
-            <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:10px; width:100%; color: white;">WIS DATABASE</button>
+            <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:8px; width:100%; color: white;">WIS DATABASE</button>
         </div>
     </div>
 </div>
 
 <script>
-    // Firebase Configuratie
     const firebaseConfig = {
         apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
         authDomain: "aangifteq2les1.firebaseapp.com",
@@ -149,26 +144,35 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Bot Logica - Makkelijker feiten medelen
     let askCount = { locatie: 0, tijd: 0 };
 
     const responses = {
-        wie: "Mijn naam is Annemarie van Dooren, ik ben geboren op 25-11-1995 in Amsterdam.",
+        wie: ["Ik ben Annemarie van Dooren. Geboren op 25-11-1995 in Amsterdam. Moet ik ook m'n BSN geven of geloof je het wel?", "Annemarie van Dooren, zeg ik toch."],
         locatie: [
-            "Dat was bij station Veenendaal-De Klomp, Stationsweg 10. In het rek bij het talud.",
-            "Nou ja, ik twijfel nu, misschien was het toch bij die stenen trap daar?",
-            "Ik weet het ook niet meer precies! Die stalling bij De Klomp gewoon."
+            "Bij station Veenendaal-De Klomp, Stationsweg 10. Hij stond in dat rek bij het talud.",
+            "Nou ja, misschien was het toch iets meer richting die stenen trap daar? Het was druk.",
+            "De stalling bij De Klomp. Echt, veel preciezer wordt het niet."
         ],
         tijd: [
-            "Ik zette hem daar om 07:05 uur neer. De trein ging namelijk om 07:07.", 
-            "Wacht... het was 07:15 geloof ik. Ik had nogal haast.",
-            "Rond zeven uur was het. Dat weet ik wel zeker."
+            "Om 07:05 uur precies zette ik hem neer. M'n trein ging namelijk om 07:07.",
+            "Misschien was het 07:15? Ik moest haasten, dus ik keek niet elke seconde op de klok.",
+            "Gewoon in de ochtend, rond een uur of zeven."
         ],
-        fiets: "Een zwarte Gazelle. Gewoon een oud ding, hij is ongeveer 150 euro waard.",
-        schade: "Het achterlicht is kapot en het spatbord is krom. Er lagen rode scherven op de grond.",
-        slot: "Natuurlijk stond hij op slot! Met een kettingslot aan het rek.",
-        confrontatie: "Oké, je hebt me. Ik ben een beetje in de war door de stress. Hou de eerste tijd maar aan.",
-        onzin: "Wat is dat voor een vraag? Kunnen we het over de diefstal hebben?"
+        fiets: ["Een zwarte Gazelle. Geen nieuwe hoor, maar hij was nog zeker 150 euro waard.", "Gewoon die zwarte Gazelle van me. Merk je toch vaker dat die gejat worden?"],
+        schade: ["M'n achterlicht is helemaal kapot en het spatbord is kromgebogen. Er lagen rode scherven op de grond.", "Het achterlicht is verbrijzeld. Zonde van die fiets."],
+        slot: ["Hij stond met een kettingslot vast aan het rek. Ik laat m'n fiets echt niet los staan.", "Kettingslot, stevig genoeg dacht ik. Blijkbaar niet."],
+        confrontatie: [
+            "Oké, luister, ik ben ook maar een mens en ik ben nogal overstuur. Laten we die eerste tijd maar aanhouden.",
+            "Ja, je bent scherp. Ik haal de details een beetje door elkaar door de stress.",
+            "Nou en? Ik weet het ook niet meer op de seconde nauwkeurig."
+        ],
+        onzin: [
+            "Geen idee wat dat ermee te maken heeft. Kunnen we terug naar m'n fiets?",
+            "Ik snap de vraag niet helemaal. Wat wil je precies weten over de diefstal?",
+            "Zucht... ik ben hier niet voor m'n lol hoor. Laten we bij de feiten blijven.",
+            "Is dat belangrijk voor het proces-verbaal? Ik weet het namelijk niet.",
+            "Kunnen we dit afronden? Ik word hier een beetje kriegel van."
+        ]
     };
 
     function chatWithBot() {
@@ -181,25 +185,26 @@
 
         setTimeout(() => {
             let reply;
+            const getRnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
             
-            if (val.includes("fout") || val.includes("klopt niet") || val.includes("verkeerd")) {
-                reply = responses.confrontatie;
-            } else if (val.includes("wie") || val.includes("naam")) {
-                reply = responses.wie;
-            } else if (val.includes("waar") || val.includes("locatie") || val.includes("stalling")) {
+            if (val.includes("fout") || val.includes("klopt niet") || val.includes("eerst zei je")) {
+                reply = getRnd(responses.confrontatie);
+            } else if (val.includes("wie") || val.includes("naam") || val.includes("ben je")) {
+                reply = getRnd(responses.wie);
+            } else if (val.includes("waar") || val.includes("locatie") || val.includes("stalling") || val.includes("plek")) {
                 reply = responses.locatie[askCount.locatie] || responses.locatie[2];
                 askCount.locatie++;
-            } else if (val.includes("wanneer") || val.includes("tijd") || val.includes("hoe laat")) {
+            } else if (val.includes("wanneer") || val.includes("tijd") || val.includes("hoe laat") || val.includes("uur")) {
                 reply = responses.tijd[askCount.tijd] || responses.tijd[2];
                 askCount.tijd++;
-            } else if (val.includes("fiets") || val.includes("gazelle")) {
-                reply = responses.fiets;
-            } else if (val.includes("schade") || val.includes("kapot")) {
-                reply = responses.schade;
-            } else if (val.includes("slot")) {
-                reply = responses.slot;
+            } else if (val.includes("fiets") || val.includes("gazelle") || val.includes("merk") || val.includes("waarde") || val.includes("geld") || val.includes("euro")) {
+                reply = getRnd(responses.fiets);
+            } else if (val.includes("schade") || val.includes("kapot") || val.includes("stuk") || val.includes("scherven")) {
+                reply = getRnd(responses.schade);
+            } else if (val.includes("slot") || val.includes("vast")) {
+                reply = getRnd(responses.slot);
             } else {
-                reply = responses.onzin;
+                reply = getRnd(responses.onzin);
             }
 
             addBubble(reply, 'bot');
@@ -233,7 +238,7 @@
             timestamp: new Date().toLocaleString('nl-NL')
         }).then(() => { 
             document.getElementById('pvInput').value = '';
-            alert("Feiten opgeslagen.");
+            alert("Feiten opgeslagen in het systeem.");
         });
     }
 
@@ -249,7 +254,7 @@
         const element = document.getElementById('pdf-content');
         const opt = {
             margin: 10,
-            filename: 'Verhoor_Annemarie.pdf',
+            filename: 'PV_Verhoor_Annemarie.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -259,7 +264,7 @@
 
     db.ref('posts').on('value', (snap) => {
         const container = document.getElementById('feed-container');
-        container.innerHTML = "<h3>INGELEVERDE TEKSTEN</h3>";
+        container.innerHTML = "<h3>INGELEVERDE VERSLAGEN</h3>";
         const data = snap.val();
         if(data) {
             Object.keys(data).reverse().forEach(id => {
@@ -271,7 +276,7 @@
                     <div class="pv-text">${item.tekst}</div>
                     <div class="fb-section">Feedback: ${item.feedback || 'Geen'}</div>
                     <div style="display:flex; gap:5px; margin-top:5px;">
-                        <input type="text" id="fb-in-${id}" placeholder="Feedback..." style="font-size:0.7em; flex:1;">
+                        <input type="text" id="fb-in-${id}" placeholder="Type feedback..." style="font-size:0.7em; flex:1; padding:3px;">
                         <button onclick="addFeedback('${id}')" style="font-size:0.6em; background:#34495e;">OK</button>
                     </div>
                 `;
