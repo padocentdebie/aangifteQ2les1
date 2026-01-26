@@ -9,32 +9,84 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        body { background-color: #0a0e14; color: #d1d1d1; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
-        .main-wrapper { display: flex; gap: 20px; max-width: 1300px; margin: auto; flex-wrap: wrap; height: 90vh; }
+        body { background-color: #0a0e14; color: #d1d1d1; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; overflow: hidden; }
         
-        #chat-section { flex: 1; min-width: 350px; background: #1c222d; border: 2px solid #c0392b; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; }
-        #chat-header { padding: 15px; background: #c0392b; color: white; text-align: center; font-weight: bold; }
-        #messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f4f7f6; }
+        /* De wrapper vult nu het scherm en voorkomt dat de pagina zelf scrolt */
+        .main-wrapper { 
+            display: flex; 
+            gap: 20px; 
+            max-width: 1400px; 
+            margin: auto; 
+            height: 95vh; 
+        }
         
-        #aangifte-section { flex: 1.2; min-width: 400px; background: #ffffff; border: 2px solid #bdc3c7; display: flex; flex-direction: column; padding: 15px; border-radius: 8px; color: #333; }
+        /* Chat sectie */
+        #chat-section { 
+            flex: 1; 
+            min-width: 350px; 
+            background: #1c222d; 
+            border: 2px solid #c0392b; 
+            display: flex; 
+            flex-direction: column; 
+            border-radius: 8px; 
+            overflow: hidden; 
+        }
+        
+        #messages { 
+            flex: 1; 
+            padding: 15px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            background: #f4f7f6; 
+        }
+
+        /* Aangifte sectie met interne scroll */
+        #aangifte-section { 
+            flex: 1.2; 
+            min-width: 400px; 
+            background: #ffffff; 
+            border: 2px solid #bdc3c7; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 15px; 
+            border-radius: 8px; 
+            color: #333;
+            max-height: 100%;
+        }
+
+        /* Hier zorgen we dat alleen de lijst met verslagen scrolt */
+        #pdf-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #feed-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding-right: 5px;
+        }
         
         .bubble { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 0.95em; line-height: 1.4; animation: fadeIn 0.3s; position: relative; }
         .bot { align-self: flex-start; background: #e8e8e8; color: #2c3e50; border-bottom-left-radius: 2px; }
         .user-msg { align-self: flex-end; background: #c0392b; color: white; border-bottom-right-radius: 2px; }
         
-        .feed-item { background: #f9f9f9; border: 1px solid #ddd; padding: 12px; margin-top: 15px; border-radius: 8px; }
+        .feed-item { background: #f9f9f9; border: 1px solid #ddd; padding: 12px; margin-bottom: 10px; border-radius: 8px; }
         .pv-text { color: #2c3e50; white-space: pre-wrap; margin-bottom: 8px; font-size: 0.9em; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .fb-section { color: #d35400; font-size: 0.85em; font-weight: bold; }
 
         .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
-        input[type="text"], textarea { background: #fff; border: 1px solid #ccc; color: #333; padding: 10px; border-radius: 4px; }
-        textarea { width: 100%; min-height: 120px; box-sizing: border-box; border: 2px solid #c0392b; margin-bottom: 10px; }
+        textarea { width: 100%; min-height: 100px; box-sizing: border-box; border: 2px solid #c0392b; margin-bottom: 10px; resize: none; }
         
         button { background: #c0392b; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
         button:hover { background: #a93226; }
         .btn-pv { background: #27ae60; width: 100%; font-size: 1.1em; }
         .btn-download { background: #2980b9; margin-top: 10px; width: 100%; }
         
+        #chat-header { padding: 15px; background: #c0392b; color: white; text-align: center; font-weight: bold; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         h2 { margin-top: 0; font-size: 1.2em; color: #c0392b; }
     </style>
@@ -45,7 +97,7 @@
     <div id="chat-section">
         <div id="chat-header">VERHOOR: ANNEMARIE VAN DOOREN</div>
         <div id="messages">
-            <div class="bubble bot">Nou, ik ben er. Annemarie van Dooren. Kunnen we beginnen? Ik heb wel wat beters te doen dan hier in een muf bureau zitten.</div>
+            <div class="bubble bot">Nou, ik ben er. Annemarie van Dooren. Wat wil je weten? Ik heb weinig tijd.</div>
         </div>
         <div class="input-area">
             <input type="text" id="botInput" style="flex:1; margin-right: 5px;" placeholder="Stel je vraag aan de verdachte..." onkeypress="if(event.key==='Enter') chatWithBot()">
@@ -56,19 +108,22 @@
     <div id="aangifte-section">
         <div id="pdf-content">
             <h2>PV VAN BEVINDINGEN</h2>
-            <p style="font-size: 0.8em; color: #666;">Dossiernummer: #AVD-2024-99</p>
+            <p style="font-size: 0.8em; color: #666; margin-bottom: 5px;">Dossiernummer: #AVD-2024-99</p>
             <textarea id="pvInput" placeholder="Noteer de feiten: Wie, wat, waar, wanneer, schade..."></textarea>
+            
             <div id="feed-container"></div>
         </div>
         
-        <button class="btn-pv" onclick="submitToFirebase()">OPSLAAN IN DATABASE</button>
-        <button class="btn-download" onclick="downloadPDF()">DOWNLOAD ALS PDF</button>
-        <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:10px; color: white; border:none; padding:5px; cursor:pointer;">WIS DATABASE</button>
+        <div class="action-buttons">
+            <button class="btn-pv" onclick="submitToFirebase()">OPSLAAN IN DATABASE</button>
+            <button class="btn-download" onclick="downloadPDF()">DOWNLOAD ALS PDF</button>
+            <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:10px; width:100%; color: white; border:none; padding:5px; cursor:pointer;">WIS DATABASE</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // Firebase Configuratie
+    // Firebase Configuratie (ongewijzigd)
     const firebaseConfig = {
         apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
         authDomain: "aangifteq2les1.firebaseapp.com",
@@ -81,32 +136,27 @@
     
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let localData = {}; 
 
-    // Bot Logica variabelen
+    // Bot Logica - Teksten aangepast voor vlottere feiten-medeling
     let askCount = { wie: 0, locatie: 0, tijd: 0, fiets: 0, schade: 0 };
 
     const responses = {
-        wie: ["Annemarie van Dooren. Geboren 25-11-1995 in Amsterdam. Heb je m'n ID niet al lang gekopieerd?", "Annemarie van Dooren, zeg ik toch."],
+        wie: ["Ik ben Annemarie van Dooren. Geboren op 25 november 1995 in Amsterdam. Kunnen we nu verder?"],
         locatie: [
-            "Bij station Veenendaal-De Klomp, Stationsweg 10. In het rek bij het talud.", // Eerste keer
-            "Euhm, nu je het vraagt... misschien was het toch iets meer naar links, bij de stenen trap?", // Tweede keer (tegenstrijdig)
-            "Ik weet het niet meer precies hoor! Het was die stalling bij De Klomp. Punt." // Derde keer
+            "Het was bij station Veenendaal-De Klomp, Stationsweg 10. Hij stond in het rek bij het talud.",
+            "Euhm, nu ik erover nadenk... misschien toch bij die stenen trap daar vlakbij?",
+            "Laten we het houden op de stalling bij De Klomp, oké?"
         ],
         tijd: [
-            "Ik zette hem er om 07:05 uur neer. De trein ging namelijk om 07:07.", 
-            "Wacht even... het kan ook 07:15 zijn geweest. Ik had nogal haast.",
-            "Waarom die details? Rond zeven uur! Het was gewoon ochtend."
+            "Ik zette hem daar neer om precies 07:05 uur. Ik moest de trein van 07:07 hebben.",
+            "Nou ja, misschien was het 07:15. Ik was nogal gehaast die ochtend.",
+            "Het was vroeg in de ochtend, rond zeven uur."
         ],
-        fiets: ["Een zwarte Gazelle. Oudje, 150 euro waard.", "Gewoon een Gazelle. Niks speciaals."],
-        schade: ["Achterlicht kapot, spatbord krom. Er lagen rode scherven op de grond.", "Het hele achterlicht is verbrijzeld. Spatbord verbogen."],
-        slot: ["Hij stond met een kettingslot vast aan het rek. Ik ben niet gek."],
-        confrontatie: [
-            "(Zucht) Oké, je hebt me. Ik haal de tijden een beetje door elkaar door de stress. Laten we die eerste tijd maar aanhouden.",
-            "Ja, scherp van je. Ik ben een beetje in de war. Sorry.",
-            "Nou en? Ik ben ook maar een mens. Ik weet het gewoon niet meer zeker."
-        ],
-        onzin: ["Wat is dat voor een vraag?", "Kunnen we bij de feiten blijven?", "Geen commentaar."]
+        fiets: ["Het is een zwarte Gazelle. Gewoon een oud beestje, ongeveer 150 euro waard."],
+        schade: ["Het achterlicht is helemaal kapot en het spatbord is krom. Ik zag rode scherven liggen."],
+        slot: ["Hij stond gewoon vast met een kettingslot aan het rek. Ik zet hem echt niet los neer."],
+        confrontatie: ["Oké, je hebt me. Ik haal de tijden wat door elkaar door de stress. Schrijf die eerste tijd maar op."],
+        onzin: ["Wat heeft dat met mijn fiets te maken?", "Laten we bij de feiten blijven.", "Geen commentaar op die vraag."]
     };
 
     function chatWithBot() {
@@ -121,15 +171,13 @@
             let reply;
             const getRnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
             
-            // Logica voor tegenstrijdigheden en triggers
-            if (val.includes("fout") || val.includes("eerst zei je") || val.includes("klopt niet") || val.includes("verkeerd")) {
+            if (val.includes("fout") || val.includes("eerst zei je") || val.includes("klopt niet")) {
                 reply = getRnd(responses.confrontatie);
             }
-            else if (val.includes("wie") || val.includes("naam")) {
-                reply = responses.wie[askCount.wie] || responses.wie[0];
-                askCount.wie++;
+            else if (val.includes("wie") || val.includes("naam") || val.includes("ben je")) {
+                reply = responses.wie[0];
             }
-            else if (val.includes("waar") || val.includes("locatie") || val.includes("stalling")) {
+            else if (val.includes("waar") || val.includes("locatie") || val.includes("gebeurd")) {
                 reply = responses.locatie[askCount.locatie] || responses.locatie[2];
                 askCount.locatie++;
             }
@@ -137,7 +185,7 @@
                 reply = responses.tijd[askCount.tijd] || responses.tijd[2];
                 askCount.tijd++;
             }
-            else if (val.includes("fiets") || val.includes("gazelle")) {
+            else if (val.includes("fiets") || val.includes("wat voor")) {
                 reply = getRnd(responses.fiets);
             }
             else if (val.includes("schade") || val.includes("kapot")) {
@@ -169,11 +217,9 @@
         const msg = new SpeechSynthesisUtterance();
         msg.text = text;
         msg.lang = 'nl-NL';
-        msg.pitch = 0.8; 
         window.speechSynthesis.speak(msg);
     }
 
-    // Firebase Functies
     function submitToFirebase() {
         const tekst = document.getElementById('pvInput').value.trim();
         if(!tekst) return;
@@ -183,7 +229,6 @@
             timestamp: new Date().toLocaleString('nl-NL')
         }).then(() => { 
             document.getElementById('pvInput').value = '';
-            alert("Opgeslagen!");
         });
     }
 
@@ -195,24 +240,22 @@
 
     function clearAll() { if(confirm("Database volledig wissen?")) db.ref('posts').remove(); }
 
-    // PDF Functie
     function downloadPDF() {
         const element = document.getElementById('pdf-content');
         const opt = {
-            margin:       10,
-            filename:     'Verhoor_Annemarie_Dossier.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            margin: 10,
+            filename: 'Verhoor_Annemarie.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
         html2pdf().set(opt).from(element).save();
     }
 
-    // Real-time Database sync
     db.ref('posts').on('value', (snap) => {
         const container = document.getElementById('feed-container');
         container.innerHTML = "<h3>VERSLAGEN</h3>";
-        localData = snap.val();
+        const localData = snap.val();
         if(localData) {
             Object.keys(localData).reverse().forEach(id => {
                 const item = localData[id];
