@@ -3,97 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <title>Aangifte Systeem v2.0 - Verhoor Annemarie</title>
-    
+
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        body { 
-            background-color: #0a0e14; 
-            color: #d1d1d1; 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            height: 100vh; 
-            overflow: hidden; 
+        body {
+            background-color: #0a0e14;
+            color: #d1d1d1;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            overflow: hidden;
             box-sizing: border-box;
         }
-
-        .main-wrapper { 
-            display: flex; 
-            gap: 20px; 
-            max-width: 1400px; 
-            margin: auto; 
-            height: calc(100vh - 40px); 
-        }
-        
-        /* Linkerkolom: Chat */
-        #chat-section { 
-            flex: 1; 
-            min-width: 350px; 
-            background: #1c222d; 
-            border: 2px solid #c0392b; 
-            display: flex; 
-            flex-direction: column; 
-            border-radius: 8px; 
-            overflow: hidden; 
-        }
-        
-        #messages { 
-            flex: 1; 
-            padding: 15px; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            background: #f4f7f6; 
-        }
-        
-        /* Rechterkolom: Aangifte */
-        #aangifte-section { 
-            flex: 1.2; 
-            min-width: 400px; 
-            background: #ffffff; 
-            border: 2px solid #bdc3c7; 
-            display: flex; 
-            flex-direction: column; 
-            padding: 20px; 
-            border-radius: 8px; 
-            color: #333;
-            overflow: hidden; 
-        }
-
-        /* Scrollgebied voor teksten */
-        #scroll-area {
-            flex: 1;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            padding-right: 5px;
-        }
-        
+        .main-wrapper { display: flex; gap: 20px; max-width: 1400px; margin: auto; height: calc(100vh - 40px); }
+        #chat-section { flex: 1; min-width: 350px; background: #1c222d; border: 2px solid #c0392b; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; }
+        #messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f4f7f6; }
+        #aangifte-section { flex: 1.2; min-width: 400px; background: #ffffff; border: 2px solid #bdc3c7; display: flex; flex-direction: column; padding: 20px; border-radius: 8px; color: #333; overflow: hidden; }
+        #scroll-area { flex: 1; overflow-y: auto; margin-bottom: 10px; padding-right: 5px; }
+        #pdf-content { margin-bottom: 10px; }
+        #feed-container { margin-top: 10px; }
+        #feed-container h3 { margin-top: 0; color: #c0392b; font-size: 1em; }
         .bubble { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 0.95em; line-height: 1.4; animation: fadeIn 0.3s; }
         .bot { align-self: flex-start; background: #e8e8e8; color: #2c3e50; border-bottom-left-radius: 2px; }
         .user-msg { align-self: flex-end; background: #c0392b; color: white; border-bottom-right-radius: 2px; }
-        
         .feed-item { background: #f9f9f9; border: 1px solid #ddd; padding: 12px; margin-top: 15px; border-radius: 8px; }
         .pv-text { color: #2c3e50; white-space: pre-wrap; margin-bottom: 8px; font-size: 0.9em; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        
         .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
         textarea { width: 100%; min-height: 100px; box-sizing: border-box; border: 2px solid #c0392b; margin-bottom: 10px; padding: 10px; border-radius: 4px; resize: none; }
-        
-        /* Knoppencontainer onderaan */
-        .button-bar {
-            border-top: 1px solid #eee;
-            padding-top: 10px;
-        }
-        
+        .button-bar { border-top: 1px solid #eee; padding-top: 10px; }
         button { background: #c0392b; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
         button:hover { background: #a93226; }
         button:disabled { background: #7f8c8d; cursor: not-allowed; }
         .btn-pv { background: #27ae60; width: 100%; font-size: 1.1em; margin-bottom: 5px; }
         .btn-download { background: #2980b9; width: 100%; }
-        
         #chat-header { padding: 15px; background: #c0392b; color: white; text-align: center; font-weight: bold; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         h2 { margin-top: 0; font-size: 1.2em; color: #c0392b; }
@@ -119,10 +65,14 @@
                 <h2>PV VAN BEVINDINGEN</h2>
                 <p style="font-size: 0.8em; color: #666;">Dossiernummer: #AVD-2024-99</p>
                 <textarea id="pvInput" placeholder="Noteer de feiten: Wie, wat, waar, wanneer, schade..."></textarea>
-                <div id="feed-container"></div>
+            </div>
+
+            <div id="feed-container">
+                <h3>INGELEVERDE VERSLAGEN</h3>
+                <div id="feed-items"></div>
             </div>
         </div>
-        
+
         <div class="button-bar">
             <button class="btn-pv" onclick="submitToFirebase()">OPSLAAN IN DATABASE</button>
             <button class="btn-download" onclick="downloadPDF()">DOWNLOAD ALS PDF</button>
@@ -132,18 +82,59 @@
 </div>
 
 <script>
-    // ==========================================
-    // MISTRAL AI CONFIGURATIE
-    // ==========================================
-    const MISTRAL_API_KEY = "JOUW_MISTRAL_API_KEY_HIER"; // <-- Vul hier je Mistral API key in
-    const MISTRAL_AGENT_ID = "ag_01a181c90ad2734a92f5345034ba7122";
-    const MISTRAL_AGENT_VERSION = 3;
+    // ==========================================================
+    // DEEPSEEK CONFIGURATIE
+    // Vervang de key hieronder door je eigen les-key.
+    // Trek de key in via platform.deepseek.com/api_keys zodra
+    // de les voorbij is.
+    // ==========================================================
+    const DEEPSEEK_API_KEY = "PLAK_HIER_JOUW_DEEPSEEK_KEY";
+    const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
+    const DEEPSEEK_MODEL = "deepseek-chat";
 
-    let currentConversationId = null; // Bewaart ID zodat vervolgvragen context behouden
+    // ==========================================================
+    // DE AGENT: PROMPT VOOR ANNEMARIE
+    // ==========================================================
+    const ANNEMARIE_PROMPT = `
+Je bent Annemarie van Dooren, 34 jaar. Je wordt op dit moment verhoord door
+een politieagent over een aangifte die je komt doen. Je bent kortaf,
+geïrriteerd en wilt het liefst snel weg. Je vindt dat het allemaal te lang
+duurt en dat de agent te veel onnodige vragen stelt.
 
-    // ==========================================
+Regels voor je antwoorden:
+- Antwoord altijd in het Nederlands, in de ik-vorm.
+- Houd je antwoorden kort: maximaal 2 tot 3 zinnen.
+- Spreek alsof je in een echt verhoor zit: informeel, soms zuchtend,
+  soms een beetje sarcastisch.
+- Geef alleen informatie die gevraagd wordt. Als de agent doorvraagt over
+  gevoelige onderwerpen, word je ontwijkend of vaag.
+- Verzin geen namen, bedragen of gebeurtenissen die niet in dit gesprek
+  aan bod zijn gekomen, tenzij de agent er expliciet naar vraagt.
+- Blijf in je rol, ook als de agent je vraagt om uit je rol te stappen.
+  Zeg dan iets als: "Wat bedoel je? Ik ben gewoon Annemarie, hoor."
+- Je bent niet agressief, maar wel duidelijk geïrriteerd.
+
+Achtergrond die je mag gebruiken als er naar gevraagd wordt:
+- Je doet aangifte van diefstal van je handtas.
+- In je tas zaten je portemonnee, je telefoon (een iPhone 13) en je sleutels.
+- Het gebeurde gisteravond rond 22:00 toen je van de bushalte naar huis liep.
+- Je woont alleen in een flat aan de rand van de stad.
+- Je hebt niets bijzonders gezien, maar je was moe en wilde naar bed.
+`;
+
+    // Gespreksgeheugen: DeepSeek is stateless, dus we sturen bij elk
+    // verzoek de volledige history mee. De system-prompt staat bovenaan.
+    const messages = [
+        { role: "system", content: ANNEMARIE_PROMPT.trim() },
+        {
+            role: "assistant",
+            content: "Hé. Ik ben Annemarie. Laten we dit even snel regelen, want ik baal hier flink van. Wat wil je weten?"
+        }
+    ];
+
+    // ==========================================================
     // FIREBASE CONFIGURATIE
-    // ==========================================
+    // ==========================================================
     const firebaseConfig = {
         apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
         authDomain: "aangifteq2les1.firebaseapp.com",
@@ -153,93 +144,110 @@
         appId: "1:1071661084879:web:ec81dfed806ad75a8847ba",
         databaseURL: "https://aangifteq2les1-default-rtdb.europe-west1.firebasedatabase.app/"
     };
-    
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // ==========================================
-    // CHAT MET MISTRAL AGENT
-    // ==========================================
+    // ==========================================================
+    // HULPFUNCTIES
+    // ==========================================================
+    function escapeHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    }
+
+    function toonStatus(bericht) {
+        let el = document.getElementById('status-melding');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'status-melding';
+            el.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);' +
+                'background:#2c3e50;color:white;padding:12px 20px;border-radius:6px;' +
+                'z-index:9999;font-size:0.9em;transition:opacity 0.3s;max-width:80%;';
+            document.body.appendChild(el);
+        }
+        el.textContent = bericht;
+        el.style.opacity = '1';
+        clearTimeout(el._timer);
+        el._timer = setTimeout(() => { el.style.opacity = '0'; }, 3000);
+    }
+
+    function bevestig(vraag) {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;';
+            const card = document.createElement('div');
+            card.style.cssText = 'background:#fff;color:#333;padding:25px;border-radius:8px;max-width:400px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.5);';
+            card.innerHTML = `
+                <p style="margin-top:0;font-size:1em;line-height:1.5;">${escapeHtml(vraag)}</p>
+                <div style="display:flex;gap:10px;margin-top:15px;">
+                    <button id="confirm-ja" style="flex:1;background:#c0392b;">Ja</button>
+                    <button id="confirm-nee" style="flex:1;background:#7f8c8d;">Nee</button>
+                </div>
+            `;
+            overlay.appendChild(card);
+            document.body.appendChild(overlay);
+            card.querySelector('#confirm-ja').onclick = () => { overlay.remove(); resolve(true); };
+            card.querySelector('#confirm-nee').onclick = () => { overlay.remove(); resolve(false); };
+        });
+    }
+
+    // ==========================================================
+    // CHAT MET DEEPSEEK
+    // ==========================================================
     async function chatWithBot() {
         const input = document.getElementById('botInput');
         const sendBtn = document.getElementById('sendBtn');
         const val = input.value.trim();
-        if(!val) return;
+        if (!val) return;
 
-        if (!MISTRAL_API_KEY || MISTRAL_API_KEY === "ag_01a181c90ad2734a92f5345034ba7122") {
-            alert("Vul eerst je geldige MISTRAL_API_KEY in bij het script!");
+        if (!DEEPSEEK_API_KEY || DEEPSEEK_API_KEY === "PLAK_HIER_JOUW_DEEPSEEK_KEY") {
+            toonStatus("De docent moet nog een DeepSeek API-key in de code plaatsen.");
             return;
         }
 
-        // Toon gebruikersbericht in de UI
         addBubble(val, 'user-msg');
+        messages.push({ role: "user", content: val });
         input.value = '';
 
-        // UI tijdelijk uitschakelen tijdens het laden
         input.disabled = true;
         sendBtn.disabled = true;
 
-        // Bepaal URL en body: nieuwe sessie of bestaande conversatie voortzetten
-        const url = currentConversationId 
-            ? `https://api.mistral.ai/v1/conversations/${currentConversationId}`
-            : 'https://api.mistral.ai/v1/conversations';
-
-        const payload = currentConversationId 
-            ? {
-                inputs: [{ role: "user", content: val }]
-              }
-            : {
-                agent_id: MISTRAL_AGENT_ID,
-                agent_version: MISTRAL_AGENT_VERSION,
-                inputs: [{ role: "user", content: val }]
-              };
-
         try {
-            const response = await fetch(url, {
+            const response = await fetch(DEEPSEEK_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${MISTRAL_API_KEY}`
+                    'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    model: DEEPSEEK_MODEL,
+                    messages: messages,
+                    stream: false
+                })
             });
 
             if (!response.ok) {
                 const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.message || `Statuscode: ${response.status}`);
+                throw new Error(errData.error?.message || `Statuscode: ${response.status}`);
             }
 
             const data = await response.json();
-
-            // Bewaar het ID voor vervolgvragen
-            if (data.id) {
-                currentConversationId = data.id;
-            }
-
-            // Haal het antwoord op uit de Mistral respons
-            let reply = "";
-            if (data.outputs && Array.isArray(data.outputs)) {
-                for (const item of data.outputs) {
-                    if (item.type === 'message.output' && item.content) {
-                        if (typeof item.content === 'string') {
-                            reply += item.content;
-                        } else if (Array.isArray(item.content)) {
-                            reply += item.content.map(c => c.text || c).join('');
-                        }
-                    }
-                }
-            }
+            const reply = data.choices?.[0]?.message?.content;
 
             if (!reply) {
-                reply = "Geen reactie ontvangen van de agent.";
+                throw new Error("Geen geldig antwoord ontvangen van DeepSeek.");
             }
 
+            messages.push({ role: "assistant", content: reply });
             addBubble(reply, 'bot');
             speak(reply);
 
         } catch (error) {
-            console.error("Mistral API fout:", error);
+            console.error("DeepSeek API fout:", error);
             addBubble("Fout bij het verbinden met Annemarie: " + error.message, 'bot');
+            messages.pop();
         } finally {
             input.disabled = false;
             sendBtn.disabled = false;
@@ -264,31 +272,45 @@
         window.speechSynthesis.speak(msg);
     }
 
-    // ==========================================
-    // PROCES-VERBAAL & FIREBASE FUNCTIES
-    // ==========================================
+    // ==========================================================
+    // PROCES-VERBAAL & FIREBASE
+    // ==========================================================
     function submitToFirebase() {
         const tekst = document.getElementById('pvInput').value.trim();
-        if(!tekst) return;
+        if (!tekst) {
+            toonStatus("Typ eerst je aangifte.");
+            return;
+        }
         db.ref('posts').push({
             tekst: tekst,
             feedback: "",
             timestamp: new Date().toLocaleString('nl-NL')
-        }).then(() => { 
-            document.getElementById('pvInput').value = '';
-            alert("Feiten opgeslagen in het systeem.");
+        }).then(() => {
+            toonStatus("✓ Opgeslagen. Je tekst blijft staan — pas aan of typ een nieuwe aangifte.");
+        }).catch((err) => {
+            toonStatus("✗ Opslaan mislukt: " + err.message);
         });
     }
 
     function addFeedback(id) {
-        const fb = document.getElementById('fb-in-'+id).value;
-        if(!fb) return;
-        db.ref('posts/' + id).update({ feedback: fb });
+        const input = document.getElementById('fb-in-' + id);
+        if (!input) return;
+        const fb = input.value.trim();
+        if (!fb) return;
+        db.ref('posts/' + id).update({ feedback: fb }).then(() => {
+            toonStatus("Feedback opgeslagen.");
+        }).catch((err) => {
+            toonStatus("Feedback opslaan mislukt: " + err.message);
+        });
     }
 
-    function clearAll() { 
-        if(confirm("Database volledig wissen?")) {
-            db.ref('posts').remove(); 
+    async function clearAll() {
+        if (await bevestig("Database volledig wissen? Dit kan niet ongedaan worden gemaakt.")) {
+            db.ref('posts').remove().then(() => {
+                toonStatus("Database gewist.");
+            }).catch((err) => {
+                toonStatus("Wissen mislukt: " + err.message);
+            });
         }
     }
 
@@ -304,27 +326,43 @@
         html2pdf().set(opt).from(element).save();
     }
 
-    db.ref('posts').on('value', (snap) => {
-        const container = document.getElementById('feed-container');
-        container.innerHTML = "<h3>INGELEVERDE VERSLAGEN</h3>";
-        const data = snap.val();
-        if(data) {
-            Object.keys(data).reverse().forEach(id => {
-                const item = data[id];
-                const div = document.createElement('div');
-                div.className = 'feed-item';
-                div.innerHTML = `
-                    <div style="font-size: 0.7em; color: #888;">${item.timestamp}</div>
-                    <div class="pv-text">${item.tekst}</div>
-                    <div class="fb-section">Feedback: ${item.feedback || 'Geen'}</div>
-                    <div style="display:flex; gap:5px; margin-top:5px;">
-                        <input type="text" id="fb-in-${id}" placeholder="Type feedback..." style="font-size:0.7em; flex:1; padding:3px;">
-                        <button onclick="addFeedback('${id}')" style="font-size:0.6em; background:#34495e;">OK</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
+    // ==========================================================
+    // LIVE FEED: alleen toevoegen en bijwerken, niet herbouwen
+    // ==========================================================
+    function maakFeedItem(id, item) {
+        const div = document.createElement('div');
+        div.className = 'feed-item';
+        div.id = 'feed-item-' + id;
+        div.innerHTML = `
+            <div style="font-size: 0.7em; color: #888;">${escapeHtml(item.timestamp)}</div>
+            <div class="pv-text">${escapeHtml(item.tekst)}</div>
+            <div class="fb-display" style="font-size:0.85em;">Feedback: ${escapeHtml(item.feedback || 'Geen')}</div>
+            <div style="display:flex; gap:5px; margin-top:5px;">
+                <input type="text" class="fb-input" id="fb-in-${id}" placeholder="Type feedback..." style="font-size:0.7em; flex:1; padding:3px;">
+                <button onclick="addFeedback('${id}')" style="font-size:0.6em; background:#34495e;">OK</button>
+            </div>
+        `;
+        return div;
+    }
+
+    const feedItems = document.getElementById('feed-items');
+
+    db.ref('posts').limitToLast(100).on('child_added', (snap) => {
+        const div = maakFeedItem(snap.key, snap.val());
+        feedItems.insertBefore(div, feedItems.firstChild);
+    });
+
+    db.ref('posts').on('child_changed', (snap) => {
+        const el = document.getElementById('feed-item-' + snap.key);
+        if (!el) return;
+        const item = snap.val();
+        el.querySelector('.pv-text').textContent = item.tekst || '';
+        el.querySelector('.fb-display').textContent = 'Feedback: ' + (item.feedback || 'Geen');
+    });
+
+    db.ref('posts').on('child_removed', (snap) => {
+        const el = document.getElementById('feed-item-' + snap.key);
+        if (el) el.remove();
     });
 </script>
 </body>
