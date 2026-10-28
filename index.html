@@ -132,9 +132,9 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
 - We zijn teruggelopen naar de bar. Daar lag mijn telefoon niet. Ook de bediening had mijn telefoon niet zien liggen toen we naar de wc gingen.
 - je vroeg an Marianne of ze mijn telefoon wilde bellen.
 - We zijn in de garderobe, in de toiletruimte en in de bar wezen luisteren. Nergens hoorden we onze telefoon afgaan.
-- Je geeft op de vragen van de politiefunctionaris antwoord als deze vraagt: Is het jouw telefoon?, 
+- Je geeft op de vragen van de politiefunctionaris antwoord als deze vraagt: Is het jouw telefoon?,
 - Als de politiefunctionaris vraagt: Heb je toestemming gewgeven voor het wegnemen van jouw telefoon?, geef je een ontkennend antwoord
-- 
+-
 `;
 
     // Gespreksgeheugen: DeepSeek is stateless, dus we sturen bij elk
@@ -185,7 +185,7 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
         el.textContent = bericht;
         el.style.opacity = '1';
         clearTimeout(el._timer);
-        el._timer = setTimeout(() => { el.style.opacity = '0'; }, 3000);
+        el._timer = setTimeout(() => { el.style.opacity = '0'; }, 3500);
     }
 
     function bevestig(vraag) {
@@ -206,6 +206,11 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
             card.querySelector('#confirm-ja').onclick = () => { overlay.remove(); resolve(true); };
             card.querySelector('#confirm-nee').onclick = () => { overlay.remove(); resolve(false); };
         });
+    }
+
+    function logFout(context, error) {
+        console.error(`[Firebase ${context}]`, error);
+        toonStatus(`Fout (${context}): ${(error && (error.code || '') + ' ' + (error.message || '')).trim()}`);
     }
 
     // ==========================================================
@@ -280,12 +285,30 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
     }
 
     function speak(text) {
+        if (!('speechSynthesis' in window)) return;
         window.speechSynthesis.cancel();
         const msg = new SpeechSynthesisUtterance();
         msg.text = text;
         msg.lang = 'nl-NL';
         window.speechSynthesis.speak(msg);
     }
+
+    // ==========================================================
+    // VERBINDINGSINDICATOR (rechtsonder in beeld)
+    // ==========================================================
+    const connEl = document.createElement('div');
+    connEl.id = 'conn-indicator';
+    connEl.style.cssText = 'position:fixed;bottom:10px;right:10px;padding:6px 12px;' +
+        'border-radius:4px;font-size:0.75em;color:white;z-index:9998;background:#7f8c8d;' +
+        'font-family:Segoe UI,sans-serif;';
+    connEl.textContent = '● Verbinden...';
+    document.body.appendChild(connEl);
+
+    db.ref('.info/connected').on('value', (snap) => {
+        const ok = snap.val() === true;
+        connEl.style.background = ok ? '#27ae60' : '#e74c3c';
+        connEl.textContent = ok ? '● Database online' : '● Database offline';
+    });
 
     // ==========================================================
     // PROCES-VERBAAL & FIREBASE
@@ -301,9 +324,9 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
             feedback: "",
             timestamp: new Date().toLocaleString('nl-NL')
         }).then(() => {
-            toonStatus("✓ Opgeslagen. Je tekst blijft staan — pas aan of typ een nieuwe aangifte.");
+            toonStatus("✓ Opgeslagen. Nu zichtbaar in de live feed voor alle studenten.");
         }).catch((err) => {
-            toonStatus("✗ Opslaan mislukt: " + err.message);
+            logFout('write', err);
         });
     }
 
@@ -315,7 +338,7 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
         db.ref('posts/' + id).update({ feedback: fb }).then(() => {
             toonStatus("Feedback opgeslagen.");
         }).catch((err) => {
-            toonStatus("Feedback opslaan mislukt: " + err.message);
+            logFout('feedback', err);
         });
     }
 
@@ -324,7 +347,7 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
             db.ref('posts').remove().then(() => {
                 toonStatus("Database gewist.");
             }).catch((err) => {
-                toonStatus("Wissen mislukt: " + err.message);
+                logFout('clear', err);
             });
         }
     }
@@ -363,22 +386,29 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
     const feedItems = document.getElementById('feed-items');
 
     db.ref('posts').limitToLast(100).on('child_added', (snap) => {
-        const div = maakFeedItem(snap.key, snap.val());
+        const div = maakFeedItem(snap.key, snap.val() || {});
         feedItems.insertBefore(div, feedItems.firstChild);
+    }, (error) => {
+        // ZONDER deze callback blijft de feed stil leeg bij een rule-fout.
+        logFout('feed-read', error);
+        feedItems.innerHTML = `<div style="color:#c0392b;padding:10px;font-size:0.85em;">
+            ⚠ Kan de live feed niet laden: ${escapeHtml(error.message)}<br>
+            <small>Controleer de Firebase rules (zie uitleg in de les).</small>
+        </div>`;
     });
 
     db.ref('posts').on('child_changed', (snap) => {
         const el = document.getElementById('feed-item-' + snap.key);
         if (!el) return;
-        const item = snap.val();
+        const item = snap.val() || {};
         el.querySelector('.pv-text').textContent = item.tekst || '';
         el.querySelector('.fb-display').textContent = 'Feedback: ' + (item.feedback || 'Geen');
-    });
+    }, (error) => logFout('feed-changed', error));
 
     db.ref('posts').on('child_removed', (snap) => {
         const el = document.getElementById('feed-item-' + snap.key);
         if (el) el.remove();
-    });
+    }, (error) => logFout('feed-removed', error));
 </script>
 </body>
 </html>
