@@ -90,6 +90,7 @@
         
         button { background: #c0392b; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
         button:hover { background: #a93226; }
+        button:disabled { background: #7f8c8d; cursor: not-allowed; }
         .btn-pv { background: #27ae60; width: 100%; font-size: 1.1em; margin-bottom: 5px; }
         .btn-download { background: #2980b9; width: 100%; }
         
@@ -131,6 +132,18 @@
 </div>
 
 <script>
+    // ==========================================
+    // MISTRAL AI CONFIGURATIE
+    // ==========================================
+    const MISTRAL_API_KEY = "JOUW_MISTRAL_API_KEY_HIER"; // <-- Vul hier je Mistral API key in
+    const MISTRAL_AGENT_ID = "ag_01a181c90ad2734a92f5345034ba7122";
+    const MISTRAL_AGENT_VERSION = 3;
+
+    let currentConversationId = null; // Bewaart ID zodat vervolgvragen context behouden
+
+    // ==========================================
+    // FIREBASE CONFIGURATIE
+    // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
         authDomain: "aangifteq2les1.firebaseapp.com",
@@ -144,72 +157,94 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let askCount = { locatie: 0, tijd: 0 };
-
-    const responses = {
-        wie: ["Ik ben Annemarie van Dooren. Geboren op 25-11-1995 in Amsterdam. Moet ik ook m'n BSN geven of geloof je het wel?", "Annemarie van Dooren, zeg ik toch."],
-        locatie: [
-            "Bij station Veenendaal-De Klomp, Stationsweg 10. Hij stond in dat rek bij het talud.",
-            "Nou ja, misschien was het toch iets meer richting die stenen trap daar? Het was druk.",
-            "De stalling bij De Klomp. Echt, veel preciezer wordt het niet."
-        ],
-        tijd: [
-            "Om 07:05 uur precies zette ik hem neer. M'n trein ging namelijk om 07:07.",
-            "Misschien was het 07:15? Ik moest haasten, dus ik keek niet elke seconde op de klok.",
-            "Gewoon in de ochtend, rond een uur of zeven."
-        ],
-        fiets: ["Een zwarte Gazelle. Geen nieuwe hoor, maar hij was nog zeker 150 euro waard.", "Gewoon die zwarte Gazelle van me. Merk je toch vaker dat die gejat worden?"],
-        schade: ["M'n achterlicht is helemaal kapot en het spatbord is kromgebogen. Er lagen rode scherven op de grond.", "Het achterlicht is verbrijzeld. Zonde van die fiets."],
-        slot: ["Hij stond met een kettingslot vast aan het rek. Ik laat m'n fiets echt niet los staan.", "Kettingslot, stevig genoeg dacht ik. Blijkbaar niet."],
-        confrontatie: [
-            "Oké, luister, ik ben ook maar een mens en ik ben nogal overstuur. Laten we die eerste tijd maar aanhouden.",
-            "Ja, je bent scherp. Ik haal de details een beetje door elkaar door de stress.",
-            "Nou en? Ik weet het ook niet meer op de seconde nauwkeurig."
-        ],
-        onzin: [
-            "Geen idee wat dat ermee te maken heeft. Kunnen we terug naar m'n fiets?",
-            "Ik snap de vraag niet helemaal. Wat wil je precies weten over de diefstal?",
-            "Zucht... ik ben hier niet voor m'n lol hoor. Laten we bij de feiten blijven.",
-            "Is dat belangrijk voor het proces-verbaal? Ik weet het namelijk niet.",
-            "Kunnen we dit afronden? Ik word hier een beetje kriegel van."
-        ]
-    };
-
-    function chatWithBot() {
+    // ==========================================
+    // CHAT MET MISTRAL AGENT
+    // ==========================================
+    async function chatWithBot() {
         const input = document.getElementById('botInput');
-        const val = input.value.trim().toLowerCase();
+        const sendBtn = document.getElementById('sendBtn');
+        const val = input.value.trim();
         if(!val) return;
 
-        addBubble(input.value, 'user-msg');
+        if (!MISTRAL_API_KEY || MISTRAL_API_KEY === "JOUW_MISTRAL_API_KEY_HIER") {
+            alert("Vul eerst je geldige MISTRAL_API_KEY in bij het script!");
+            return;
+        }
+
+        // Toon gebruikersbericht in de UI
+        addBubble(val, 'user-msg');
         input.value = '';
 
-        setTimeout(() => {
-            let reply;
-            const getRnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
-            
-            if (val.includes("fout") || val.includes("klopt niet") || val.includes("eerst zei je")) {
-                reply = getRnd(responses.confrontatie);
-            } else if (val.includes("wie") || val.includes("naam") || val.includes("ben je")) {
-                reply = getRnd(responses.wie);
-            } else if (val.includes("waar") || val.includes("locatie") || val.includes("stalling") || val.includes("plek")) {
-                reply = responses.locatie[askCount.locatie] || responses.locatie[2];
-                askCount.locatie++;
-            } else if (val.includes("wanneer") || val.includes("tijd") || val.includes("hoe laat") || val.includes("uur")) {
-                reply = responses.tijd[askCount.tijd] || responses.tijd[2];
-                askCount.tijd++;
-            } else if (val.includes("fiets") || val.includes("gazelle") || val.includes("merk") || val.includes("waarde") || val.includes("geld") || val.includes("euro")) {
-                reply = getRnd(responses.fiets);
-            } else if (val.includes("schade") || val.includes("kapot") || val.includes("stuk") || val.includes("scherven")) {
-                reply = getRnd(responses.schade);
-            } else if (val.includes("slot") || val.includes("vast")) {
-                reply = getRnd(responses.slot);
-            } else {
-                reply = getRnd(responses.onzin);
+        // UI tijdelijk uitschakelen tijdens het laden
+        input.disabled = true;
+        sendBtn.disabled = true;
+
+        // Bepaal URL en body: nieuwe sessie of bestaande conversatie voortzetten
+        const url = currentConversationId 
+            ? `https://api.mistral.ai/v1/conversations/${currentConversationId}`
+            : 'https://api.mistral.ai/v1/conversations';
+
+        const payload = currentConversationId 
+            ? {
+                inputs: [{ role: "user", content: val }]
+              }
+            : {
+                agent_id: MISTRAL_AGENT_ID,
+                agent_version: MISTRAL_AGENT_VERSION,
+                inputs: [{ role: "user", content: val }]
+              };
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${MISTRAL_API_KEY}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.message || `Statuscode: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Bewaar het ID voor vervolgvragen
+            if (data.id) {
+                currentConversationId = data.id;
+            }
+
+            // Haal het antwoord op uit de Mistral respons
+            let reply = "";
+            if (data.outputs && Array.isArray(data.outputs)) {
+                for (const item of data.outputs) {
+                    if (item.type === 'message.output' && item.content) {
+                        if (typeof item.content === 'string') {
+                            reply += item.content;
+                        } else if (Array.isArray(item.content)) {
+                            reply += item.content.map(c => c.text || c).join('');
+                        }
+                    }
+                }
+            }
+
+            if (!reply) {
+                reply = "Geen reactie ontvangen van de agent.";
             }
 
             addBubble(reply, 'bot');
             speak(reply);
-        }, 600);
+
+        } catch (error) {
+            console.error("Mistral API fout:", error);
+            addBubble("Fout bij het verbinden met Annemarie: " + error.message, 'bot');
+        } finally {
+            input.disabled = false;
+            sendBtn.disabled = false;
+            input.focus();
+        }
     }
 
     function addBubble(text, side) {
@@ -229,6 +264,9 @@
         window.speechSynthesis.speak(msg);
     }
 
+    // ==========================================
+    // PROCES-VERBAAL & FIREBASE FUNCTIES
+    // ==========================================
     function submitToFirebase() {
         const tekst = document.getElementById('pvInput').value.trim();
         if(!tekst) return;
@@ -248,7 +286,11 @@
         db.ref('posts/' + id).update({ feedback: fb });
     }
 
-    function clearAll() { if(confirm("Database volledig wissen?")) db.ref('posts').remove(); }
+    function clearAll() { 
+        if(confirm("Database volledig wissen?")) {
+            db.ref('posts').remove(); 
+        }
+    }
 
     function downloadPDF() {
         const element = document.getElementById('pdf-content');
