@@ -47,6 +47,44 @@
         .login-card button:disabled { background: #7f8c8d; cursor: not-allowed; }
         #login-error { color: #e74c3c; font-size: 0.85em; margin-top: 12px; min-height: 1em; }
 
+        /* ========== INSTRUCTIE SCHERM (NIEUW) ========== */
+        #instructie-overlay {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, #0a0e14 0%, #1a2a6c 100%);
+            display: none; align-items: center; justify-content: center; z-index: 500;
+            padding: 20px; box-sizing: border-box;
+        }
+        .instructie-card {
+            background: #1c222d; border: 2px solid #c0392b;
+            padding: 30px; border-radius: 12px; max-width: 650px; width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .instructie-card h1 { margin: 0 0 15px 0; color: #c0392b; font-size: 1.5em; }
+        .instructie-card p { color: #aaa; font-size: 0.95em; line-height: 1.6; margin: 0 0 15px 0; }
+        .instructie-lijst {
+            list-style-type: none; padding: 0; margin: 0 0 20px 0;
+            color: #d1d1d1; font-size: 0.9em; line-height: 1.5;
+        }
+        .instructie-lijst li {
+            position: relative; padding-left: 24px; margin-bottom: 8px;
+        }
+        .instructie-lijst li::before {
+            content: "✓"; position: absolute; left: 0; color: #27ae60; font-weight: bold;
+        }
+        .instructie-quote {
+            background: #0f141c; border-left: 4px solid #e67e22;
+            padding: 12px 15px; border-radius: 4px; margin-bottom: 15px;
+            font-style: italic; color: #e67e22;
+        }
+        .instructie-card button {
+            margin-top: 22px; width: 100%; padding: 14px;
+            background: #c0392b; color: white; border: none;
+            border-radius: 4px; font-size: 1.05em; font-weight: bold;
+            cursor: pointer; transition: 0.2s;
+        }
+        .instructie-card button:hover { background: #a93226; }
+
         /* ========== LAYOUT ========== */
         .main-wrapper {
             display: none; gap: 20px; max-width: 1400px; margin: auto;
@@ -166,6 +204,37 @@
     </div>
 </div>
 
+<!-- ========== INSTRUCTIE SCHERM (NIEUW) ========== -->
+<div id="instructie-overlay">
+    <div class="instructie-card">
+        <h1>📋 Instructie: PV Aangifte</h1>
+        <p>Je gaat zo een aangever verhoren. Het is de bedoeling dat je een compleet en bruikbaar Proces-Verbaal (PV) van Aangifte opstelt in het tekstvak aan de rechterkant. Let goed op de volgende eisen:</p>
+        
+        <ul class="instructie-lijst">
+            <li>Het PV is <b>bedoeld voor het strafproces</b>.</li>
+            <li>Gebruik <b>complete, eenduidige zinnen</b>.</li>
+            <li>Gebruik <b>geen afkortingen</b>.</li>
+            <li>Controleer dat de <b>data correct zijn</b>.</li>
+            <li>Controleer dat het <b>delict correct is</b>.</li>
+            <li>De aangever moet zijn <b>geïdentificeerd door middel van een geldig document</b> (vraag naar de ID-gegevens).</li>
+            <li>De aangever legt een verklaring af, de tekst begint met <b>'Ik verklaar ... '</b>.</li>
+            <li>De tekst is in de <b>ik-vorm</b> opgesteld.</li>
+            <li>De aangever gebruikt de <b>redenen van wetenschap</b> (hoe weet hij/zij dat het weg is?).</li>
+            <li>De aangever beantwoordt de <b>gouden W's</b> (Wie, Wat, Waar, Wanneer, Waarom, Hoe).</li>
+            <li>De aangever beschrijft een <b>kaal en veranderlijk decor</b> (alleen de relevante feiten en voorwerpen).</li>
+            <li>De aangever spreekt in de <b>onvoltooid verleden tijd</b> (OVT).</li>
+            <li>Vraag of de aangever zich <b>voegt in het strafproces</b> (of niet).</li>
+            <li>Vraag of de aangever <b>gebruikmaakt van slachtofferhulp</b> (of niet).</li>
+        </ul>
+
+        <div class="instructie-quote">
+            Tip: Stel de juiste vragen in de chat en vul stap voor stap het PV aan de rechterkant in.
+        </div>
+
+        <button onclick="startVerhoor()">IK BEGRIJP HET, START HET VERHOOR</button>
+    </div>
+</div>
+
 <!-- ========== HOOFDAPPLICATIE ========== -->
 <div class="main-wrapper">
     <div id="chat-section">
@@ -220,7 +289,7 @@
     const AANGEVERS = {
         A: {
             naam: "Annemarie van Dooren",
-            foto: "annemarievandoorenbalie.png",
+            foto: "annemarievandoorenbalie.png", /* <-- WEER TERUGGEZET NAAR JOUW BESTANDSNAAM */
             begroeting: "Hé. Ik ben Annemarie. Laten we dit even snel regelen, want ik baal hier flink van. Wat wil je weten?",
             prompt: `
 Je bent Annemarie van Dooren, 34 jaar. Je wordt op dit moment verhoord door
@@ -591,10 +660,16 @@ SLACHTOFFERHULP:
             `<div class="bubble bot">${escapeHtml(a.begroeting)}</div>`;
 
         document.getElementById('login-overlay').style.display = 'none';
-        document.querySelector('.main-wrapper').style.display = 'flex';
+        document.getElementById('instructie-overlay').style.display = 'flex'; /* NIEUW */
 
         loadFeed(klas);
         updateConnIndicator();
+    }
+
+    // NIEUW
+    function startVerhoor() {
+        document.getElementById('instructie-overlay').style.display = 'none';
+        document.querySelector('.main-wrapper').style.display = 'flex';
     }
 
     function logout() {
