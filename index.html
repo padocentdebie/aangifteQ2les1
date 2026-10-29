@@ -22,14 +22,30 @@
         .main-wrapper { display: flex; gap: 20px; max-width: 1400px; margin: auto; height: calc(100vh - 40px); }
         #chat-section { flex: 1; min-width: 350px; background: #1c222d; border: 2px solid #c0392b; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; }
         #messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f4f7f6; }
-        #chat-header { padding: 15px; background: #c0392b; color: white; text-align: center; font-weight: bold; }
+        #chat-header {
+            padding: 12px 15px;
+            background: #c0392b;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        #chat-header img {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.85);
+            flex-shrink: 0;
+        }
         .bubble { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 0.95em; line-height: 1.4; animation: fadeIn 0.3s; }
         .bot { align-self: flex-start; background: #e8e8e8; color: #2c3e50; border-bottom-left-radius: 2px; }
         .user-msg { align-self: flex-end; background: #c0392b; color: white; border-bottom-right-radius: 2px; }
         .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ===== RECHTERKOLOM: vaste bovenkant (textarea) + scrollende feed onderaan ===== */
         #aangifte-section {
             flex: 1.2;
             min-width: 400px;
@@ -64,7 +80,6 @@
         .btn-pv { background: #27ae60; width: 100%; font-size: 1.1em; margin-bottom: 5px; }
         .btn-download { background: #2980b9; width: 100%; }
 
-        /* ===== LIVE FEED: eigen scrollgebied onderaan, raakt de textarea nooit ===== */
         #feed-container {
             flex: 1 1 auto;
             min-height: 100px;
@@ -107,7 +122,10 @@
 
 <div class="main-wrapper">
     <div id="chat-section">
-        <div id="chat-header">VERHOOR: ANNEMARIE VAN DOOREN</div>
+        <div id="chat-header">
+            <img src="annemarievandooren.png" alt="Annemarie van Dooren" onerror="this.style.display='none'">
+            <span>VERHOOR: ANNEMARIE VAN DOOREN</span>
+        </div>
         <div id="messages">
             <div class="bubble bot">Hé. Ik ben Annemarie. Laten we dit even snel regelen, want ik baal hier flink van. Wat wil je weten?</div>
         </div>
@@ -143,7 +161,7 @@
     // ==========================================================
     const GROQ_API_KEY = "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";
     const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-    const GROQ_MODEL = "llama-3.3-70b-versatile";
+    const GROQ_MODEL = "openai/gpt-oss-20b";
 
     // ==========================================================
     // DE AGENT: PROMPT VOOR ANNEMARIE
@@ -376,8 +394,6 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
             feedback: "",
             timestamp: new Date().toLocaleString('nl-NL')
         }).then(() => {
-            // Pas leegmaken nadat Firebase de opslag heeft bevestigd.
-            // Bij een netwerkfout blijft de tekst dus staan.
             document.getElementById('pvInput').value = '';
             toonStatus("✓ Opgeslagen en zichtbaar in de live feed.");
         }).catch((err) => {
