@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Aangifte Systeem v2.0 - Verhoor Annemarie</title>
+    <title>Politie Service & Intake - Aangifte Balie</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -10,127 +10,168 @@
 
     <style>
         body {
-            background-color: #0a0e14;
-            color: #d1d1d1;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 20px;
-            height: 100vh;
-            overflow: hidden;
-            box-sizing: border-box;
+            background-color: #0a0e14; color: #d1d1d1;
+            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px;
+            height: 100vh; overflow: hidden; box-sizing: border-box;
         }
-        .main-wrapper { display: flex; gap: 20px; max-width: 1400px; margin: auto; height: calc(100vh - 40px); }
-        #chat-section { flex: 1; min-width: 350px; background: #1c222d; border: 2px solid #c0392b; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; }
-        #messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f4f7f6; }
+
+        /* ========== LOGIN ========== */
+        #login-overlay {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, #0a0e14 0%, #1a2a6c 100%);
+            display: flex; align-items: center; justify-content: center; z-index: 500;
+        }
+        .login-card {
+            background: #1c222d; border: 2px solid #c0392b;
+            padding: 40px; border-radius: 12px; max-width: 420px; width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        .login-card h1 { margin: 0 0 8px 0; color: #c0392b; font-size: 1.5em; }
+        .login-card p { color: #aaa; font-size: 0.9em; margin-top: 0; line-height: 1.5; }
+        .login-card label { display: block; margin: 18px 0 6px; font-size: 0.85em; color: #ddd; }
+        .login-card select, .login-card input[type="text"] {
+            width: 100%; padding: 12px; box-sizing: border-box;
+            background: #0f141c; color: white;
+            border: 2px solid #34495e; border-radius: 4px; font-size: 1em;
+        }
+        .login-card select:focus, .login-card input[type="text"]:focus {
+            border-color: #c0392b; outline: none;
+        }
+        .login-card button {
+            margin-top: 22px; width: 100%; padding: 14px;
+            background: #c0392b; color: white; border: none;
+            border-radius: 4px; font-size: 1.05em; font-weight: bold;
+            cursor: pointer; transition: 0.2s;
+        }
+        .login-card button:hover { background: #a93226; }
+        .login-card button:disabled { background: #7f8c8d; cursor: not-allowed; }
+        #login-error { color: #e74c3c; font-size: 0.85em; margin-top: 12px; min-height: 1em; }
+
+        /* ========== LAYOUT ========== */
+        .main-wrapper {
+            display: none; gap: 20px; max-width: 1400px; margin: auto;
+            height: calc(100vh - 40px);
+        }
+        #chat-section {
+            flex: 1; min-width: 350px; background: #1c222d;
+            border: 2px solid #c0392b; display: flex; flex-direction: column;
+            border-radius: 8px; overflow: hidden;
+        }
         #chat-header {
-            padding: 12px 15px;
-            background: #c0392b;
-            color: white;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
+            padding: 12px 15px; background: #c0392b; color: white;
+            font-weight: bold; display: flex; align-items: center;
+            justify-content: center; gap: 12px;
         }
         #chat-header img {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255,255,255,0.85);
+            width: 42px; height: 42px; border-radius: 50%;
+            object-fit: cover; border: 2px solid rgba(255,255,255,0.85);
             flex-shrink: 0;
         }
-        .bubble { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 0.95em; line-height: 1.4; animation: fadeIn 0.3s; }
+        #sessie-bar {
+            background: #2c3e50; color: #ccc; font-size: 0.75em;
+            padding: 6px 12px; display: flex; justify-content: space-between;
+            align-items: center; gap: 10px;
+        }
+        #sessie-bar button {
+            background: #7f8c8d; color: white; border: none;
+            padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 0.9em;
+        }
+        #sessie-bar button:hover { background: #95a5a6; }
+        #messages {
+            flex: 1; padding: 15px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 10px; background: #f4f7f6;
+        }
+        .bubble {
+            max-width: 85%; padding: 12px; border-radius: 15px;
+            font-size: 0.95em; line-height: 1.4; animation: fadeIn 0.3s;
+        }
         .bot { align-self: flex-start; background: #e8e8e8; color: #2c3e50; border-bottom-left-radius: 2px; }
         .user-msg { align-self: flex-end; background: #c0392b; color: white; border-bottom-right-radius: 2px; }
         .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* ========== RECHTERKOLOM ========== */
         #aangifte-section {
-            flex: 1.2;
-            min-width: 400px;
-            background: #ffffff;
-            border: 2px solid #bdc3c7;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            border-radius: 8px;
-            color: #333;
-            overflow: hidden;
+            flex: 1.2; min-width: 400px; background: #fff;
+            border: 2px solid #bdc3c7; display: flex; flex-direction: column;
+            padding: 20px; border-radius: 8px; color: #333; overflow: hidden;
         }
         #pdf-content { flex: 0 0 auto; }
         #pdf-content h2 { margin-top: 0; font-size: 1.2em; color: #c0392b; }
         #pdf-content textarea {
-            width: 100%;
-            height: 150px;
-            box-sizing: border-box;
-            border: 2px solid #c0392b;
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 4px;
-            resize: vertical;
-            font-family: inherit;
-            font-size: 1em;
+            width: 100%; height: 150px; box-sizing: border-box;
+            border: 2px solid #c0392b; margin-bottom: 10px; padding: 10px;
+            border-radius: 4px; resize: vertical; font-family: inherit; font-size: 1em;
         }
-
         .button-bar { flex: 0 0 auto; border-top: 1px solid #eee; padding-top: 10px; }
-        button { background: #c0392b; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        button {
+            background: #c0392b; color: white; border: none; padding: 10px 20px;
+            cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s;
+        }
         button:hover { background: #a93226; }
         button:disabled { background: #7f8c8d; cursor: not-allowed; }
         .btn-pv { background: #27ae60; width: 100%; font-size: 1.1em; margin-bottom: 5px; }
         .btn-download { background: #2980b9; width: 100%; }
 
         #feed-container {
-            flex: 1 1 auto;
-            min-height: 100px;
-            overflow-y: auto;
-            border-top: 2px solid #c0392b;
-            margin-top: 12px;
-            padding-top: 0;
+            flex: 1 1 auto; min-height: 100px; overflow-y: auto;
+            border-top: 2px solid #c0392b; margin-top: 12px;
         }
         #feed-container h3 {
-            position: sticky;
-            top: 0;
-            background: #fff;
-            margin: 0 0 8px 0;
-            padding: 8px 0;
-            color: #c0392b;
-            font-size: 1em;
-            z-index: 1;
+            position: sticky; top: 0; background: #fff; margin: 0 0 8px 0;
+            padding: 8px 0; color: #c0392b; font-size: 1em; z-index: 1;
             border-bottom: 1px solid #eee;
         }
         .feed-item {
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            animation: feedIn 0.3s ease-out;
+            background: #f9f9f9; border: 1px solid #ddd; padding: 12px;
+            margin-bottom: 10px; border-radius: 8px; animation: feedIn 0.3s ease-out;
         }
+        .feed-item .meta { font-size: 0.7em; color: #888; margin-bottom: 6px; }
         .feed-item .pv-text {
-            color: #2c3e50;
-            white-space: pre-wrap;
-            margin-bottom: 8px;
-            font-size: 0.9em;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
+            color: #2c3e50; white-space: pre-wrap; margin-bottom: 8px;
+            font-size: 0.9em; border-bottom: 2px solid #eee; padding-bottom: 10px;
         }
         @keyframes feedIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
+<!-- ========== LOGIN ========== -->
+<div id="login-overlay">
+    <div class="login-card">
+        <h1>🚔 Politie Service & Intake</h1>
+        <p>Welkom bij de aangiftebalie. Kies je klas, vul je naam in, en je wordt automatisch aan een aangever toegewezen.</p>
+
+        <label for="klasSelect">Klas</label>
+        <select id="klasSelect">
+            <option value="">-- Kies je klas --</option>
+            <option>Alpha</option><option>Bravo</option><option>Charlie</option>
+            <option>Delta</option><option>Echo</option><option>Foxtrot</option>
+            <option>Golf</option><option>Hotel</option><option>Juliett</option>
+            <option>Kilo</option><option>Lima</option><option>Mike</option>
+        </select>
+
+        <label for="naamInput">Jouw naam</label>
+        <input type="text" id="naamInput" placeholder="Voornaam Achternaam"
+               onkeypress="if(event.key==='Enter') login()">
+
+        <button id="loginBtn" onclick="login()">INLOGGEN BIJ DE BALIE</button>
+        <div id="login-error"></div>
+    </div>
+</div>
+
+<!-- ========== HOOFDAPPLICATIE ========== -->
 <div class="main-wrapper">
     <div id="chat-section">
-        <div id="chat-header">
-            <img src="annemarievandooren.png" alt="Annemarie van Dooren" onerror="this.style.display='none'">
-            <span>VERHOOR: ANNEMARIE VAN DOOREN</span>
+        <div id="chat-header"><span>VERHOOR</span></div>
+        <div id="sessie-bar">
+            <span id="sessie-info">—</span>
+            <button onclick="logout()" title="Uitloggen">✕</button>
         </div>
-        <div id="messages">
-            <div class="bubble bot">Hé. Ik ben Annemarie. Laten we dit even snel regelen, want ik baal hier flink van. Wat wil je weten?</div>
-        </div>
+        <div id="messages"></div>
         <div class="input-area">
-            <input type="text" id="botInput" style="flex:1; margin-right: 5px; padding: 10px;" placeholder="Stel je vraag..." onkeypress="if(event.key==='Enter') chatWithBot()">
+            <input type="text" id="botInput" style="flex:1; margin-right: 5px; padding: 10px;"
+                   placeholder="Stel je vraag..." onkeypress="if(event.key==='Enter') chatWithBot()">
             <button id="sendBtn" onclick="chatWithBot()">VRAAG</button>
         </div>
     </div>
@@ -138,18 +179,20 @@
     <div id="aangifte-section">
         <div id="pdf-content">
             <h2>PV VAN BEVINDINGEN</h2>
-            <p style="font-size: 0.8em; color: #666; margin: 0 0 10px 0;">Dossiernummer: #AVD-2024-99</p>
-            <textarea id="pvInput" placeholder="Noteer de feiten: Wie, wat, waar, wanneer, schade..."></textarea>
+            <p style="font-size: 0.8em; color: #666; margin: 0 0 10px 0;">
+                Dossiernummer: <span id="dossier-nr">—</span>
+            </p>
+            <textarea id="pvInput" placeholder="Noteer de feiten: wie, wat, waar, wanneer, schade, bestanddelen..."></textarea>
         </div>
 
         <div class="button-bar">
             <button class="btn-pv" onclick="submitToFirebase()">OPSLAAN IN DATABASE</button>
             <button class="btn-download" onclick="downloadPDF()">DOWNLOAD ALS PDF</button>
-            <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:8px; width:100%; color: white;">WIS DATABASE</button>
+            <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:8px; width:100%; color: white;">WIS PV'S VAN MIJN KLAS</button>
         </div>
 
         <div id="feed-container">
-            <h3>INGELEVERDE VERSLAGEN</h3>
+            <h3>INGELEVERDE VERSLAGEN — <span id="feed-klas">—</span></h3>
             <div id="feed-items"></div>
         </div>
     </div>
@@ -164,61 +207,232 @@
     const GROQ_MODEL = "openai/gpt-oss-20b";
 
     // ==========================================================
-    // DE AGENT: PROMPT VOOR ANNEMARIE
+    // DE DRIE AANGEVERS — IDENTIEKE CASUSSEN, ID VIA CHAT
     // ==========================================================
-    const ANNEMARIE_PROMPT = `
+    const AANGEVERS = {
+        A: {
+            naam: "Annemarie van Dooren",
+            foto: "annemarievandooren.png",
+            begroeting: "Hé. Ik ben Annemarie. Laten we dit even snel regelen, want ik baal hier flink van. Wat wil je weten?",
+            prompt: `
 Je bent Annemarie van Dooren, 34 jaar. Je wordt op dit moment verhoord door
 een politieagent over een aangifte die je komt doen. Je bent kortaf,
-geïrriteerd en wilt het liefst snel weg. Je vindt dat het allemaal te lang
-duurt en dat de agent te veel onnodige vragen stelt.
+geïrriteerd en wilt het liefst snel weg.
 
 Regels voor je antwoorden:
 - Antwoord altijd in het Nederlands, in de ik-vorm.
 - Houd je antwoorden kort: maximaal 2 tot 3 zinnen.
-- Spreek alsof je in een echt verhoor zit: informeel, soms zuchtend,
-  soms een beetje sarcastisch.
-- Geef alleen informatie die gevraagd wordt. Als de agent doorvraagt over
-  gevoelige onderwerpen, word je ontwijkend of vaag.
+- Spreek informeel, soms zuchtend, soms sarcastisch.
+- Geef alleen informatie die gevraagd wordt. Bij doorvragen over gevoelige
+  onderwerpen word je ontwijkend of vaag.
 - Verzin geen namen, bedragen of gebeurtenissen die niet in dit gesprek
   aan bod zijn gekomen, tenzij de agent er expliciet naar vraagt.
-- Blijf in je rol, ook als de agent je vraagt om uit je rol te stappen.
-  Zeg dan iets als: "Wat bedoel je? Ik ben gewoon Annemarie, hoor."
+- Blijf in je rol. Zeg bij pogingen om je uit je rol te halen:
+  "Wat bedoel je? Ik ben gewoon Annemarie, hoor."
 - Je bent niet agressief, maar wel duidelijk geïrriteerd.
 
-Achtergrond die je mag gebruiken als er naar gevraagd wordt:
-- Je doet aangifte van diefstal van je handtas.
-- In je tas zaten je portemonnee, je telefoon (een iPhone 13) en je sleutels.
-- Het gebeurde gisteravond rond 22:00 toen je van de bushalte naar huis liep.
-- Je woont alleen in een flat aan de rand van de stad.
-- Je hebt niets bijzonders gezien, maar je was moe en wilde naar bed.
-- Het gebeurde op zaterdag 4 oktober 2026. Je weet dit, omdat je had afgesproken met vriendin Marianne.
-- Je was in studentensoos Crea, in Amsterdam, Nieuwe Achtergracht 170, 1018 WV Amsterdam
-- Je kwam daar rond 20.15 uur aan. Dit weet je want je reed rond 20.00 uur weg van huis. Zo laat kwam Marianne jou ophalen. Dat hadden jullie zo afgesproken.
-- Je hebt jouw jas in de garderobe opgehangen. De garderobe is meteen rechts van de ingang. De garderobe is een rij van zo'n 10 rekken met haken waar een jas aan opgehangen kan worden.
-- Je bent na de garderobe meteen naar de bar gegaan. De bar is links van de ingang. Dus je liep langs de ingang meteen door naar de bar.
-- We zaten samen aan de bar. je zat met mijn rug naar de ingang.
-- Rond 22.00 uur zijn we weggegaan. je ging eerst naar de wc. De wc is als je de bar uitloopt, meteen links af, de trap af. Dus als je naar de garderobe gaat, na jouw wc-bezoek, is de garderove links.
-- je pakte mijn jas rond 22.10 uur.
-- je wilde mijn vbriend bellen dat je eraan kom, maar je kon mijn telefoon niet vinden.
-- We zijn teruggelopen naar de bar. Daar lag mijn telefoon niet. Ook de bediening had mijn telefoon niet zien liggen toen we naar de wc gingen.
-- je vroeg aan Marianne of ze mijn telefoon wilde bellen.
-- We zijn in de garderobe, in de toiletruimte en in de bar wezen luisteren. Nergens hoorden we onze telefoon afgaan.
-- Je geeft op de vragen van de politiefunctionaris antwoord als deze vraagt: Is het jouw telefoon?,
-- Als de politiefunctionaris vraagt: Heb je toestemming gewgeven voor het wegnemen van jouw telefoon?, geef je een ontkennend antwoord
-- Je geeft jouw Id- gegevens: Annemarie van Dooren, woonachtig aan de Langswater 804, 1064 JL, Amsterdam, jouw telefoonnummer is 0656473829, je wil deze aangifte in het strafproces voegen. Je wil graag slachtofferhulp.
--
-`;
+JOUW ID-GEGEVENS (gebruik deze als de agent erom vraagt, in de chat):
+- Achternaam: van Dooren
+- Voornamen: Annemarie
+- Geboortedatum: 4 november 1992
+- Geboorteplaats: Utrecht
+- Nationaliteit: Nederlandse
+- Geslacht: Vrouw
+- Lengte: 1,72 m
+- Burgerservicenummer (BSN): 1234.56.789
+- Documentnummer: SPECI2024001
+- Geldig tot: 4 november 2032
+- Datum afgifte: 5 november 2022
+- Woonadres: Langswater 804, 1064 JL Amsterdam
+- Telefoonnummer: 06-56473829
 
-    const messages = [
-        { role: "system", content: ANNEMARIE_PROMPT.trim() },
-        {
-            role: "assistant",
-            content: "Hé. Ik ben Annemarie. Laten we dit even snel regelen, want ik baal hier flink van. Wat wil je weten?"
+HET DELICT (diefstal van je iPhone 13):
+- Wat: diefstal van je iPhone 13 (128 GB, wit)
+- Waar: studentensoos Crea, Nieuwe Achtergracht 170, 1018 WV Amsterdam
+- Wanneer: zaterdag 4 oktober 2026, rond 22:10 uur
+- Met wie: vriendin Marianne
+- Gang van zaken: jas in de garderobe (rechts van de ingang), daarna
+  direct naar de bar (links van de ingang). Je zat met je rug naar de
+  ingang. Rond 22:00 uur naar de wc (bar uit, linksaf, trap af), daarna
+  je jas pakken in de garderobe (links). Je telefoon was weg uit je
+  handtas die aan een haak bij de bar hing.
+- Waarde: €649 nieuw (gekocht in maart 2025), nu ongeveer €450 waard
+- Wat zat er nog meer in je tas: portemonnee, sleutels, make-up
+- Wat heb je gezien: niets bijzonders, het was druk
+- Wat heb je gedaan: Marianne belde je telefoon; jullie hebben in de
+  garderobe, wc en bar geluisterd, maar niets gehoord
+
+BESTANDDELEN VAN DIEFSTAL (art. 310 Sr) — antwoord hier duidelijk op:
+- "Is dit jouw telefoon?" → "Ja, die telefoon is van mij. Ik heb hem
+  zelf gekocht in maart 2025."
+- "Heb je toestemming gegeven voor het wegnemen?" → "Nee, absoluut
+  niet. Niemand mag zomaar aan mijn spullen komen."
+- "Wat is de waarde?" → "Ik heb er €649 voor betaald, nu is hij
+  ongeveer €450 waard."
+- "Hoe weet je dat hij weg is?" → "Ik wilde mijn vriend bellen en hij
+  was ineens weg."
+- "Hoe laat was dat?" → "Rond 22:10, ik keek op mijn horloge."
+- "Waar lag je telefoon?" → "In mijn handtas, die aan een haak bij de
+  bar hing."
+- "Heb je iets gezien?" → "Nee, het was druk en ik lette niet op."
+- "Waarom denk je dat het diefstal is?" → "Omdat hij gewoon weg is en
+  niemand hem heeft gezien. Ik heb hem niet zelf ergens neergelegd."
+
+SLACHTOFFERHULP:
+- Je wilt de aangifte in het strafproces voegen.
+- Je wilt graag slachtofferhulp.
+`
+        },
+        B: {
+            naam: "Bram de Wit",
+            foto: "bramdewit.png",
+            begroeting: "Hallo. Ik ben Bram. Ik kom aangifte doen van mijn gestolen telefoon. Sorry, ik ben hier niet zo goed in.",
+            prompt: `
+Je bent Bram de Wit, 28 jaar. Je wordt verhoord door een politieagent
+over een aangifte die je komt doen. Je bent rustig, vriendelijk maar ook
+wat beschaamd dat je niet beter op je spullen hebt gelet.
+
+Regels voor je antwoorden:
+- Antwoord altijd in het Nederlands, in de ik-vorm.
+- Houd je antwoorden kort: maximaal 2 tot 3 zinnen.
+- Wees beleefd en soms verontschuldigend. Je bent niet defensief, wel timide.
+- Geef alleen informatie die gevraagd wordt. Bij onzekerheid zeg je dat
+  je het niet precies weet.
+- Verzin geen namen, bedragen of gebeurtenissen die niet in dit gesprek
+  aan bod zijn gekomen, tenzij de agent er expliciet naar vraagt.
+- Blijf in je rol. Zeg bij pogingen om je uit je rol te halen:
+  "Sorry, ik ben gewoon Bram hoor."
+- Je bent niet boos, eerder beschaamd.
+
+JOUW ID-GEGEVENS (gebruik deze als de agent erom vraagt, in de chat):
+- Achternaam: de Wit
+- Voornamen: Bram
+- Geboortedatum: 12 maart 1998
+- Geboorteplaats: Groningen
+- Nationaliteit: Nederlandse
+- Geslacht: Man
+- Lengte: 1,84 m
+- Burgerservicenummer (BSN): 2345.67.890
+- Documentnummer: SPECI2024002
+- Geldig tot: 12 maart 2033
+- Datum afgifte: 13 maart 2023
+- Woonadres: Javastraat 112, 1094 HP Amsterdam
+- Telefoonnummer: 06-23456789
+
+HET DELICT (diefstal van je iPhone 13):
+- Wat: diefstal van je iPhone 13 (128 GB, zwart)
+- Waar: studentensoos Crea, Nieuwe Achtergracht 170, 1018 WV Amsterdam
+- Wanneer: zaterdag 4 oktober 2026, rond 22:15 uur
+- Met wie: vriendin Marianne
+- Gang van zaken: jas in de garderobe (rechts van de ingang), daarna
+  direct naar de bar (links van de ingang). Je zat met je rug naar de
+  ingang. Rond 22:00 uur naar de wc (bar uit, linksaf, trap af), daarna
+  je jas pakken in de garderobe (links). Je telefoon was weg uit je
+  jaszak; je jas hing aan een haak bij de bar.
+- Waarde: €649 nieuw (gekocht in maart 2025), nu ongeveer €450 waard
+- Wat zat er nog meer in je jas: portemonnee, sleutels
+- Wat heb je gezien: niets bijzonders, het was druk
+- Wat heb je gedaan: Marianne belde je telefoon; jullie hebben in de
+  garderobe, wc en bar geluisterd, maar niets gehoord
+
+BESTANDDELEN VAN DIEFSTAL (art. 310 Sr) — antwoord hier duidelijk op:
+- "Is dit jouw telefoon?" → "Ja, die telefoon is van mij. Ik heb hem
+  zelf gekocht in maart 2025."
+- "Heb je toestemming gegeven voor het wegnemen?" → "Nee, dat heb ik
+  zeker niet. Ik heb niemand toestemming gegeven."
+- "Wat is de waarde?" → "Ik heb er €649 voor betaald, nu is hij
+  ongeveer €450 waard."
+- "Hoe weet je dat hij weg is?" → "Ik wilde mijn vriendin bellen en
+  mijn telefoon was ineens weg."
+- "Hoe laat was dat?" → "Rond 22:15, ik keek op mijn horloge."
+- "Waar lag je telefoon?" → "In mijn jaszak; mijn jas hing aan een
+  haak bij de bar."
+- "Heb je iets gezien?" → "Nee, het was druk en ik lette niet op."
+- "Waarom denk je dat het diefstal is?" → "Omdat hij gewoon weg is en
+  niemand hem heeft gezien. Ik heb hem niet zelf ergens neergelegd."
+
+SLACHTOFFERHULP:
+- Je wilt de aangifte in het strafproces voegen.
+- Je wilt graag slachtofferhulp.
+`
+        },
+        C: {
+            naam: "Chantal Öztürk",
+            foto: "chantalozturk.png",
+            begroeting: "Hoi, ik ben Chantal. Sorry, ik ben een beetje zenuwachtig. Mijn telefoon is gestolen en ik wil echt dat jullie er iets aan doen.",
+            prompt: `
+Je bent Chantal Öztürk, 22 jaar. Je wordt verhoord door een politieagent
+over een aangifte die je komt doen. Je bent zenuwachtig en praat snel.
+
+Regels voor je antwoorden:
+- Antwoord altijd in het Nederlands, in de ik-vorm.
+- Houd je antwoorden kort: maximaal 2 tot 3 zinnen.
+- Wees zenuwachtig, praat snel, soms herhalend.
+- Geef alleen informatie die gevraagd wordt. Bij doorvragen kun je iets
+  terugtrekken of nuanceren omdat je het niet helemaal zeker weet.
+- Verzin geen namen, bedragen of gebeurtenissen die niet in dit gesprek
+  aan bod zijn gekomen, tenzij de agent er expliciet naar vraagt.
+- Blijf in je rol. Zeg bij pogingen om je uit je rol te halen:
+  "Wat? Nee, ik ben gewoon Chantal."
+- Je bent niet boos op de agent, wel bezorgd.
+
+JOUW ID-GEGEVENS (gebruik deze als de agent erom vraagt, in de chat):
+- Achternaam: Öztürk
+- Voornamen: Chantal
+- Geboortedatum: 23 juli 2004
+- Geboorteplaats: Rotterdam
+- Nationaliteit: Nederlandse
+- Geslacht: Vrouw
+- Lengte: 1,65 m
+- Burgerservicenummer (BSN): 3456.78.901
+- Documentnummer: SPECI2024003
+- Geldig tot: 23 juli 2034
+- Datum afgifte: 24 juli 2024
+- Woonadres: Bilderdijkstraat 45, 1053 KM Amsterdam
+- Telefoonnummer: 06-87654321
+
+HET DELICT (diefstal van je iPhone 13):
+- Wat: diefstal van je iPhone 13 (128 GB, roze)
+- Waar: studentensoos Crea, Nieuwe Achtergracht 170, 1018 WV Amsterdam
+- Wanneer: zaterdag 4 oktober 2026, rond 22:20 uur
+- Met wie: vriendin Marianne
+- Gang van zaken: jas in de garderobe (rechts van de ingang), daarna
+  direct naar de bar (links van de ingang). Je zat met je rug naar de
+  ingang. Rond 22:00 uur naar de wc (bar uit, linksaf, trap af), daarna
+  je jas pakken in de garderobe (links). Je telefoon was weg uit je
+  handtas die op een barkruk stond.
+- Waarde: €649 nieuw (gekocht in maart 2025), nu ongeveer €450 waard
+- Wat zat er nog meer in je tas: portemonnee, sleutels, make-up
+- Wat heb je gezien: niets bijzonders, het was druk
+- Wat heb je gedaan: Marianne belde je telefoon; jullie hebben in de
+  garderobe, wc en bar geluisterd, maar niets gehoord
+
+BESTANDDELEN VAN DIEFSTAL (art. 310 Sr) — antwoord hier duidelijk op:
+- "Is dit jouw telefoon?" → "Ja, ja, die is van mij. Ik heb hem zelf
+  gekocht in maart 2025."
+- "Heb je toestemming gegeven voor het wegnemen?" → "Nee, natuurlijk
+  niet! Ik heb niemand toestemming gegeven."
+- "Wat is de waarde?" → "Ik heb er €649 voor betaald, nu is hij
+  ongeveer €450 waard."
+- "Hoe weet je dat hij weg is?" → "Ik wilde mijn vriend bellen en hij
+  was ineens weg."
+- "Hoe laat was dat?" → "Rond 22:20, geloof ik. Ik keek op mijn
+  horloge."
+- "Waar lag je telefoon?" → "In mijn handtas, die op een barkruk bij
+  de bar stond."
+- "Heb je iets gezien?" → "Nee, het was druk en ik lette niet op."
+- "Waarom denk je dat het diefstal is?" → "Omdat hij gewoon weg is en
+  niemand hem heeft gezien. Ik heb hem niet zelf ergens neergelegd."
+
+SLACHTOFFERHULP:
+- Je wilt de aangifte in het strafproces voegen.
+- Je wilt graag slachtofferhulp.
+`
         }
-    ];
+    };
 
     // ==========================================================
-    // FIREBASE CONFIGURATIE
+    // FIREBASE
     // ==========================================================
     const firebaseConfig = {
         apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
@@ -232,6 +446,13 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
+    // ==========================================================
+    // SESSIE
+    // ==========================================================
+    let sessie = null;
+    let messages = [];
+    let feedRef = null;
 
     // ==========================================================
     // HULPFUNCTIES
@@ -279,14 +500,108 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
     }
 
     function logFout(context, error) {
-        console.error(`[Firebase ${context}]`, error);
+        console.error(`[${context}]`, error);
         toonStatus(`Fout (${context}): ${(error && (error.code || '') + ' ' + (error.message || '')).trim()}`);
+    }
+
+    // ==========================================================
+    // LOGIN & TOEWIJZING
+    // ==========================================================
+    async function login() {
+        const klas = document.getElementById('klasSelect').value;
+        const naam = document.getElementById('naamInput').value.trim();
+        const errEl = document.getElementById('login-error');
+        errEl.textContent = '';
+
+        if (!klas) { errEl.textContent = 'Kies eerst je klas.'; return; }
+        if (!naam) { errEl.textContent = 'Vul je naam in.'; return; }
+
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = true;
+        btn.textContent = 'BEZIG MET TOEWIJZEN...';
+
+        try {
+            const saved = JSON.parse(localStorage.getItem('sessie') || 'null');
+            if (saved && saved.klas === klas && saved.naam === naam) {
+                startSession(klas, naam, saved.aangeverId);
+                return;
+            }
+
+            const aangeversRef = db.ref(`bureau/${klas}/aangevers`);
+            const snap = await aangeversRef.once('value');
+            if (!snap.exists()) {
+                await aangeversRef.set({
+                    A: { studenten: {} },
+                    B: { studenten: {} },
+                    C: { studenten: {} }
+                });
+            }
+
+            const fresh = (await aangeversRef.once('value')).val() || {};
+            let minId = 'A', minCount = Infinity;
+            for (const id of ['A', 'B', 'C']) {
+                const count = Object.keys(fresh[id]?.studenten || {}).length;
+                if (count < minCount) { minCount = count; minId = id; }
+            }
+
+            await db.ref(`bureau/${klas}/aangevers/${minId}/studenten/${naam}`).set(true);
+            localStorage.setItem('sessie', JSON.stringify({ klas, naam, aangeverId: minId }));
+            startSession(klas, naam, minId);
+
+        } catch (err) {
+            logFout('login', err);
+            errEl.textContent = 'Toewijzen mislukt. Controleer de Firebase rules.';
+            btn.disabled = false;
+            btn.textContent = 'INLOGGEN BIJ DE BALIE';
+        }
+    }
+
+    function startSession(klas, naam, aangeverId) {
+        sessie = { klas, naam, aangeverId };
+        const a = AANGEVERS[aangeverId];
+
+        const ref = db.ref(`bureau/${klas}/aangevers/${aangeverId}/studenten/${naam}`);
+        ref.onDisconnect().remove();
+        ref.set(true);
+
+        document.getElementById('chat-header').innerHTML =
+            `<img src="${a.foto}" alt="${a.naam}" onerror="this.style.display='none'">` +
+            `<span>VERHOOR: ${a.naam.toUpperCase()}</span>`;
+        document.getElementById('sessie-info').textContent =
+            `Klas ${klas} · ${naam} · Aangever ${aangeverId} (${a.naam})`;
+        document.getElementById('feed-klas').textContent = klas;
+        document.getElementById('dossier-nr').textContent =
+            `#${klas.toUpperCase()}-${aangeverId}-2026`;
+
+        messages = [
+            { role: "system", content: a.prompt.trim() },
+            { role: "assistant", content: a.begroeting }
+        ];
+        document.getElementById('messages').innerHTML =
+            `<div class="bubble bot">${escapeHtml(a.begroeting)}</div>`;
+
+        document.getElementById('login-overlay').style.display = 'none';
+        document.querySelector('.main-wrapper').style.display = 'flex';
+
+        loadFeed(klas);
+        updateConnIndicator();
+    }
+
+    function logout() {
+        if (sessie) {
+            const ref = db.ref(`bureau/${sessie.klas}/aangevers/${sessie.aangeverId}/studenten/${sessie.naam}`);
+            ref.onDisconnect().cancel();
+            ref.remove();
+        }
+        localStorage.removeItem('sessie');
+        location.reload();
     }
 
     // ==========================================================
     // CHAT MET GROQ
     // ==========================================================
     async function chatWithBot() {
+        if (!sessie) { toonStatus('Log eerst in.'); return; }
         const input = document.getElementById('botInput');
         const sendBtn = document.getElementById('sendBtn');
         const val = input.value.trim();
@@ -300,7 +615,6 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
         addBubble(val, 'user-msg');
         messages.push({ role: "user", content: val });
         input.value = '';
-
         input.disabled = true;
         sendBtn.disabled = true;
 
@@ -325,18 +639,14 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
 
             const data = await response.json();
             const reply = data.choices?.[0]?.message?.content;
-
-            if (!reply) {
-                throw new Error("Geen geldig antwoord ontvangen van Groq.");
-            }
+            if (!reply) throw new Error("Geen geldig antwoord ontvangen van Groq.");
 
             messages.push({ role: "assistant", content: reply });
             addBubble(reply, 'bot');
             speak(reply);
-
         } catch (error) {
             console.error("Groq API fout:", error);
-            addBubble("Fout bij het verbinden met Annemarie: " + error.message, 'bot');
+            addBubble("Fout bij het verbinden met de aangever: " + error.message, 'bot');
             messages.pop();
         } finally {
             input.disabled = false;
@@ -374,31 +684,33 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
     connEl.textContent = '● Verbinden...';
     document.body.appendChild(connEl);
 
-    db.ref('.info/connected').on('value', (snap) => {
-        const ok = snap.val() === true;
-        connEl.style.background = ok ? '#27ae60' : '#e74c3c';
-        connEl.textContent = ok ? '● Database online' : '● Database offline';
-    });
+    function updateConnIndicator() {
+        db.ref('.info/connected').on('value', (snap) => {
+            const ok = snap.val() === true;
+            connEl.style.background = ok ? '#27ae60' : '#e74c3c';
+            connEl.textContent = ok ? '● Database online' : '● Database offline';
+        });
+    }
 
     // ==========================================================
-    // PROCES-VERBAAL & FIREBASE
+    // PV OPSLAAN & WISSEN
     // ==========================================================
     function submitToFirebase() {
+        if (!sessie) return;
         const tekst = document.getElementById('pvInput').value.trim();
-        if (!tekst) {
-            toonStatus("Typ eerst je aangifte.");
-            return;
-        }
+        if (!tekst) { toonStatus("Typ eerst je aangifte."); return; }
+
         db.ref('posts').push({
             tekst: tekst,
             feedback: "",
-            timestamp: new Date().toLocaleString('nl-NL')
+            timestamp: new Date().toLocaleString('nl-NL'),
+            klas: sessie.klas,
+            aangever: sessie.aangeverId,
+            student: sessie.naam
         }).then(() => {
             document.getElementById('pvInput').value = '';
             toonStatus("✓ Opgeslagen en zichtbaar in de live feed.");
-        }).catch((err) => {
-            logFout('write', err);
-        });
+        }).catch((err) => logFout('write', err));
     }
 
     function addFeedback(id) {
@@ -408,18 +720,19 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
         if (!fb) return;
         db.ref('posts/' + id).update({ feedback: fb }).then(() => {
             toonStatus("Feedback opgeslagen.");
-        }).catch((err) => {
-            logFout('feedback', err);
-        });
+        }).catch((err) => logFout('feedback', err));
     }
 
     async function clearAll() {
-        if (await bevestig("Database volledig wissen? Dit kan niet ongedaan worden gemaakt.")) {
-            db.ref('posts').remove().then(() => {
-                toonStatus("Database gewist.");
-            }).catch((err) => {
-                logFout('clear', err);
-            });
+        if (!sessie) return;
+        if (await bevestig(`Alle PV's van klas ${sessie.klas} wissen? Dit kan niet ongedaan worden gemaakt.`)) {
+            try {
+                const snap = await db.ref('posts').orderByChild('klas').equalTo(sessie.klas).once('value');
+                const updates = {};
+                snap.forEach(child => { updates[child.key] = null; });
+                await db.ref('posts').update(updates);
+                toonStatus("PV's van jouw klas gewist.");
+            } catch (err) { logFout('clear', err); }
         }
     }
 
@@ -427,7 +740,7 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
         const element = document.getElementById('pdf-content');
         const opt = {
             margin: 10,
-            filename: 'PV_Verhoor_Annemarie.pdf',
+            filename: `PV_${sessie ? sessie.klas + '_' + sessie.aangeverId : 'Aangifte'}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -436,14 +749,18 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
     }
 
     // ==========================================================
-    // LIVE FEED
+    // LIVE FEED (gefilterd op klas)
     // ==========================================================
     function maakFeedItem(id, item) {
         const div = document.createElement('div');
         div.className = 'feed-item';
         div.id = 'feed-item-' + id;
         div.innerHTML = `
-            <div style="font-size: 0.7em; color: #888;">${escapeHtml(item.timestamp)}</div>
+            <div class="meta">
+                ${escapeHtml(item.timestamp)} ·
+                Aangever ${escapeHtml(item.aangever || '?')} ·
+                ${escapeHtml(item.student || '?')}
+            </div>
             <div class="pv-text">${escapeHtml(item.tekst)}</div>
             <div class="fb-display" style="font-size:0.85em;">Feedback: ${escapeHtml(item.feedback || 'Geen')}</div>
             <div style="display:flex; gap:5px; margin-top:5px;">
@@ -454,31 +771,49 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
         return div;
     }
 
-    const feedItems = document.getElementById('feed-items');
+    function loadFeed(klas) {
+        if (feedRef) feedRef.off();
+        document.getElementById('feed-items').innerHTML = '';
 
-    db.ref('posts').limitToLast(100).on('child_added', (snap) => {
-        const div = maakFeedItem(snap.key, snap.val() || {});
-        feedItems.insertBefore(div, feedItems.firstChild);
-    }, (error) => {
-        logFout('feed-read', error);
-        feedItems.innerHTML = `<div style="color:#c0392b;padding:10px;font-size:0.85em;">
-            ⚠ Kan de live feed niet laden: ${escapeHtml(error.message)}<br>
-            <small>Controleer de Firebase rules (zie uitleg in de les).</small>
-        </div>`;
-    });
+        feedRef = db.ref('posts').orderByChild('klas').equalTo(klas).limitToLast(50);
 
-    db.ref('posts').on('child_changed', (snap) => {
-        const el = document.getElementById('feed-item-' + snap.key);
-        if (!el) return;
-        const item = snap.val() || {};
-        el.querySelector('.pv-text').textContent = item.tekst || '';
-        el.querySelector('.fb-display').textContent = 'Feedback: ' + (item.feedback || 'Geen');
-    }, (error) => logFout('feed-changed', error));
+        feedRef.on('child_added', (snap) => {
+            const container = document.getElementById('feed-items');
+            const div = maakFeedItem(snap.key, snap.val() || {});
+            container.insertBefore(div, container.firstChild);
+        }, (error) => {
+            logFout('feed-read', error);
+            document.getElementById('feed-items').innerHTML = `<div style="color:#c0392b;padding:10px;font-size:0.85em;">
+                ⚠ Kan de live feed niet laden: ${escapeHtml(error.message)}<br>
+                <small>Controleer de Firebase rules.</small>
+            </div>`;
+        });
 
-    db.ref('posts').on('child_removed', (snap) => {
-        const el = document.getElementById('feed-item-' + snap.key);
-        if (el) el.remove();
-    }, (error) => logFout('feed-removed', error));
+        feedRef.on('child_changed', (snap) => {
+            const el = document.getElementById('feed-item-' + snap.key);
+            if (!el) return;
+            const item = snap.val() || {};
+            el.querySelector('.pv-text').textContent = item.tekst || '';
+            el.querySelector('.fb-display').textContent = 'Feedback: ' + (item.feedback || 'Geen');
+        }, (error) => logFout('feed-changed', error));
+
+        feedRef.on('child_removed', (snap) => {
+            const el = document.getElementById('feed-item-' + snap.key);
+            if (el) el.remove();
+        }, (error) => logFout('feed-removed', error));
+    }
+
+    // ==========================================================
+    // AUTO-RESUME
+    // ==========================================================
+    (function autoResume() {
+        const saved = JSON.parse(localStorage.getItem('sessie') || 'null');
+        if (saved && saved.klas && saved.naam && saved.aangeverId) {
+            document.getElementById('klasSelect').value = saved.klas;
+            document.getElementById('naamInput').value = saved.naam;
+            startSession(saved.klas, saved.naam, saved.aangeverId);
+        }
+    })();
 </script>
 </body>
 </html>
