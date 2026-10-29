@@ -22,27 +22,85 @@
         .main-wrapper { display: flex; gap: 20px; max-width: 1400px; margin: auto; height: calc(100vh - 40px); }
         #chat-section { flex: 1; min-width: 350px; background: #1c222d; border: 2px solid #c0392b; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; }
         #messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f4f7f6; }
-        #aangifte-section { flex: 1.2; min-width: 400px; background: #ffffff; border: 2px solid #bdc3c7; display: flex; flex-direction: column; padding: 20px; border-radius: 8px; color: #333; overflow: hidden; }
-        #scroll-area { flex: 1; overflow-y: auto; margin-bottom: 10px; padding-right: 5px; }
-        #pdf-content { margin-bottom: 10px; }
-        #feed-container { margin-top: 10px; }
-        #feed-container h3 { margin-top: 0; color: #c0392b; font-size: 1em; }
+        #chat-header { padding: 15px; background: #c0392b; color: white; text-align: center; font-weight: bold; }
         .bubble { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 0.95em; line-height: 1.4; animation: fadeIn 0.3s; }
         .bot { align-self: flex-start; background: #e8e8e8; color: #2c3e50; border-bottom-left-radius: 2px; }
         .user-msg { align-self: flex-end; background: #c0392b; color: white; border-bottom-right-radius: 2px; }
-        .feed-item { background: #f9f9f9; border: 1px solid #ddd; padding: 12px; margin-top: 15px; border-radius: 8px; }
-        .pv-text { color: #2c3e50; white-space: pre-wrap; margin-bottom: 8px; font-size: 0.9em; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
-        textarea { width: 100%; min-height: 100px; box-sizing: border-box; border: 2px solid #c0392b; margin-bottom: 10px; padding: 10px; border-radius: 4px; resize: none; }
-        .button-bar { border-top: 1px solid #eee; padding-top: 10px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ===== RECHTERKOLOM: vaste bovenkant (textarea) + scrollende feed onderaan ===== */
+        #aangifte-section {
+            flex: 1.2;
+            min-width: 400px;
+            background: #ffffff;
+            border: 2px solid #bdc3c7;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border-radius: 8px;
+            color: #333;
+            overflow: hidden;
+        }
+        #pdf-content { flex: 0 0 auto; }
+        #pdf-content h2 { margin-top: 0; font-size: 1.2em; color: #c0392b; }
+        #pdf-content textarea {
+            width: 100%;
+            height: 150px;
+            box-sizing: border-box;
+            border: 2px solid #c0392b;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 1em;
+        }
+
+        .button-bar { flex: 0 0 auto; border-top: 1px solid #eee; padding-top: 10px; }
         button { background: #c0392b; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
         button:hover { background: #a93226; }
         button:disabled { background: #7f8c8d; cursor: not-allowed; }
         .btn-pv { background: #27ae60; width: 100%; font-size: 1.1em; margin-bottom: 5px; }
         .btn-download { background: #2980b9; width: 100%; }
-        #chat-header { padding: 15px; background: #c0392b; color: white; text-align: center; font-weight: bold; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        h2 { margin-top: 0; font-size: 1.2em; color: #c0392b; }
+
+        /* ===== LIVE FEED: eigen scrollgebied onderaan, raakt de textarea nooit ===== */
+        #feed-container {
+            flex: 1 1 auto;
+            min-height: 100px;
+            overflow-y: auto;
+            border-top: 2px solid #c0392b;
+            margin-top: 12px;
+            padding-top: 0;
+        }
+        #feed-container h3 {
+            position: sticky;
+            top: 0;
+            background: #fff;
+            margin: 0 0 8px 0;
+            padding: 8px 0;
+            color: #c0392b;
+            font-size: 1em;
+            z-index: 1;
+            border-bottom: 1px solid #eee;
+        }
+        .feed-item {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            animation: feedIn 0.3s ease-out;
+        }
+        .feed-item .pv-text {
+            color: #2c3e50;
+            white-space: pre-wrap;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        @keyframes feedIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -60,17 +118,10 @@
     </div>
 
     <div id="aangifte-section">
-        <div id="scroll-area">
-            <div id="pdf-content">
-                <h2>PV VAN BEVINDINGEN</h2>
-                <p style="font-size: 0.8em; color: #666;">Dossiernummer: #AVD-2024-99</p>
-                <textarea id="pvInput" placeholder="Noteer de feiten: Wie, wat, waar, wanneer, schade..."></textarea>
-            </div>
-
-            <div id="feed-container">
-                <h3>INGELEVERDE VERSLAGEN</h3>
-                <div id="feed-items"></div>
-            </div>
+        <div id="pdf-content">
+            <h2>PV VAN BEVINDINGEN</h2>
+            <p style="font-size: 0.8em; color: #666; margin: 0 0 10px 0;">Dossiernummer: #AVD-2024-99</p>
+            <textarea id="pvInput" placeholder="Noteer de feiten: Wie, wat, waar, wanneer, schade..."></textarea>
         </div>
 
         <div class="button-bar">
@@ -78,19 +129,21 @@
             <button class="btn-download" onclick="downloadPDF()">DOWNLOAD ALS PDF</button>
             <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:8px; width:100%; color: white;">WIS DATABASE</button>
         </div>
+
+        <div id="feed-container">
+            <h3>INGELEVERDE VERSLAGEN</h3>
+            <div id="feed-items"></div>
+        </div>
     </div>
 </div>
 
 <script>
     // ==========================================================
-    // DEEPSEEK CONFIGURATIE
-    // Vervang de key hieronder door je eigen les-key.
-    // Trek de key in via platform.deepseek.com/api_keys zodra
-    // de les voorbij is.
+    // GROQ CONFIGURATIE
     // ==========================================================
-    const DEEPSEEK_API_KEY = "sk-26042abb74e04eceb0a51cf18e3c8f7f";
-    const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
-    const DEEPSEEK_MODEL = "deepseek-chat";
+    const GROQ_API_KEY = "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";
+    const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+    const GROQ_MODEL = "llama-3.3-70b-versatile";
 
     // ==========================================================
     // DE AGENT: PROMPT VOOR ANNEMARIE
@@ -138,8 +191,6 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
 -
 `;
 
-    // Gespreksgeheugen: DeepSeek is stateless, dus we sturen bij elk
-    // verzoek de volledige history mee. De system-prompt staat bovenaan.
     const messages = [
         { role: "system", content: ANNEMARIE_PROMPT.trim() },
         {
@@ -215,7 +266,7 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
     }
 
     // ==========================================================
-    // CHAT MET DEEPSEEK
+    // CHAT MET GROQ
     // ==========================================================
     async function chatWithBot() {
         const input = document.getElementById('botInput');
@@ -223,8 +274,8 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
         const val = input.value.trim();
         if (!val) return;
 
-        if (!DEEPSEEK_API_KEY || DEEPSEEK_API_KEY === "PLAK_HIER_JOUW_DEEPSEEK_KEY") {
-            toonStatus("De docent moet nog een DeepSeek API-key in de code plaatsen.");
+        if (!GROQ_API_KEY) {
+            toonStatus("De docent moet nog een Groq API-key in de code plaatsen.");
             return;
         }
 
@@ -236,14 +287,14 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
         sendBtn.disabled = true;
 
         try {
-            const response = await fetch(DEEPSEEK_URL, {
+            const response = await fetch(GROQ_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+                    'Authorization': `Bearer ${GROQ_API_KEY}`
                 },
                 body: JSON.stringify({
-                    model: DEEPSEEK_MODEL,
+                    model: GROQ_MODEL,
                     messages: messages,
                     stream: false
                 })
@@ -258,7 +309,7 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
             const reply = data.choices?.[0]?.message?.content;
 
             if (!reply) {
-                throw new Error("Geen geldig antwoord ontvangen van DeepSeek.");
+                throw new Error("Geen geldig antwoord ontvangen van Groq.");
             }
 
             messages.push({ role: "assistant", content: reply });
@@ -266,7 +317,7 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
             speak(reply);
 
         } catch (error) {
-            console.error("DeepSeek API fout:", error);
+            console.error("Groq API fout:", error);
             addBubble("Fout bij het verbinden met Annemarie: " + error.message, 'bot');
             messages.pop();
         } finally {
@@ -295,7 +346,7 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
     }
 
     // ==========================================================
-    // VERBINDINGSINDICATOR (rechtsonder in beeld)
+    // VERBINDINGSINDICATOR
     // ==========================================================
     const connEl = document.createElement('div');
     connEl.id = 'conn-indicator';
@@ -325,7 +376,10 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
             feedback: "",
             timestamp: new Date().toLocaleString('nl-NL')
         }).then(() => {
-            toonStatus("✓ Opgeslagen. Nu zichtbaar in de live feed voor alle studenten.");
+            // Pas leegmaken nadat Firebase de opslag heeft bevestigd.
+            // Bij een netwerkfout blijft de tekst dus staan.
+            document.getElementById('pvInput').value = '';
+            toonStatus("✓ Opgeslagen en zichtbaar in de live feed.");
         }).catch((err) => {
             logFout('write', err);
         });
@@ -366,7 +420,7 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
     }
 
     // ==========================================================
-    // LIVE FEED: alleen toevoegen en bijwerken, niet herbouwen
+    // LIVE FEED
     // ==========================================================
     function maakFeedItem(id, item) {
         const div = document.createElement('div');
@@ -390,7 +444,6 @@ Achtergrond die je mag gebruiken als er naar gevraagd wordt:
         const div = maakFeedItem(snap.key, snap.val() || {});
         feedItems.insertBefore(div, feedItems.firstChild);
     }, (error) => {
-        // ZONDER deze callback blijft de feed stil leeg bij een rule-fout.
         logFout('feed-read', error);
         feedItems.innerHTML = `<div style="color:#c0392b;padding:10px;font-size:0.85em;">
             ⚠ Kan de live feed niet laden: ${escapeHtml(error.message)}<br>
