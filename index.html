@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <title>Politie Service & Intake - Aangifte Balie</title>
 
+
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 
     <style>
         body {
@@ -14,6 +16,7 @@
             font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px;
             height: 100vh; overflow: hidden; box-sizing: border-box;
         }
+
 
         /* ========== LOGIN ========== */
         #login-overlay {
@@ -46,6 +49,7 @@
         .login-card button:hover { background: #a93226; }
         .login-card button:disabled { background: #7f8c8d; cursor: not-allowed; }
         #login-error { color: #e74c3c; font-size: 0.85em; margin-top: 12px; min-height: 1em; }
+
 
         /* ========== INSTRUCTIE SCHERM ========== */
         #instructie-overlay {
@@ -85,6 +89,7 @@
         }
         .instructie-card button:hover { background: #a93226; }
 
+
         /* ========== PDF VIEWER SCHERM (AANGIFTEKLAPPER) ========== */
         #pdf-overlay {
             position: fixed; inset: 0;
@@ -116,6 +121,7 @@
             display: flex; gap: 10px; margin-top: 12px; flex-shrink: 0;
         }
 
+
         /* ========== LAYOUT ========== */
         .main-wrapper {
             display: none; gap: 20px; max-width: 1400px; margin: auto;
@@ -126,6 +132,7 @@
             border: 2px solid #c0392b; display: flex; flex-direction: column;
             border-radius: 8px; overflow: hidden;
         }
+
 
         #chat-header {
             background: #c0392b; color: white; font-weight: bold;
@@ -140,6 +147,7 @@
             padding: 10px 15px; text-align: center; font-size: 0.95em;
             letter-spacing: 0.5px;
         }
+
 
         #sessie-bar {
             background: #2c3e50; color: #ccc; font-size: 0.75em;
@@ -161,6 +169,7 @@
             background: #3498db !important;
         }
 
+
         #messages {
             flex: 1; padding: 15px; overflow-y: auto;
             display: flex; flex-direction: column; gap: 10px; background: #f4f7f6;
@@ -173,6 +182,7 @@
         .user-msg { align-self: flex-end; background: #c0392b; color: white; border-bottom-right-radius: 2px; }
         .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
 
         /* ========== RECHTERKOLOM ========== */
         #aangifte-section {
@@ -197,6 +207,7 @@
         .btn-pv { background: #27ae60; width: 100%; font-size: 1.1em; margin-bottom: 5px; }
         .btn-download { background: #2980b9; width: 100%; }
 
+
         #feed-container {
             flex: 1 1 auto; min-height: 100px; overflow-y: auto;
             border-top: 2px solid #c0392b; margin-top: 12px;
@@ -220,11 +231,13 @@
 </head>
 <body>
 
+
 <!-- ========== LOGIN ========== -->
 <div id="login-overlay">
     <div class="login-card">
         <h1>🚔 Politie Service & Intake</h1>
         <p>Welkom bij de aangiftebalie. Kies je klas, vul je naam in, en je wordt automatisch aan een aangever toegewezen.</p>
+
 
         <label for="klasSelect">Klas</label>
         <select id="klasSelect">
@@ -235,14 +248,17 @@
             <option>Kilo</option><option>Lima</option><option>Mike</option>
         </select>
 
+
         <label for="naamInput">Jouw naam</label>
         <input type="text" id="naamInput" placeholder="Voornaam Achternaam"
                onkeypress="if(event.key==='Enter') login()">
+
 
         <button id="loginBtn" onclick="login()">INLOGGEN BIJ DE BALIE</button>
         <div id="login-error"></div>
     </div>
 </div>
+
 
 <!-- ========== INSTRUCTIE SCHERM ========== -->
 <div id="instructie-overlay">
@@ -280,13 +296,16 @@
             </li>
         </ul>
 
+
         <div class="instructie-quote">
             Tip: Bestudeer eerst de Aangifteklapper. Stel daarna de juiste vragen in de chat en vul stap voor stap het PV in.
         </div>
 
+
         <button onclick="naarPdfViewer()">VOLGENDE: BEKIJK AANGIFTEKLAPPER ➔</button>
     </div>
 </div>
+
 
 <!-- ========== PDF VIEWER SCHERM (AANGIFTEKLAPPER) ========== -->
 <div id="pdf-overlay">
@@ -303,6 +322,7 @@
             </a>
         </div>
 
+
         <div class="pdf-iframe-container">
             <iframe src="Aangifteklapper%20(3).pdf" title="Aangifteklapper PDF">
                 <p style="color: white; padding: 20px;">
@@ -311,12 +331,14 @@
             </iframe>
         </div>
 
+
         <div class="pdf-card-footer">
             <button id="btn-pdf-terug" onclick="terugNaarInstructie()" style="background: #7f8c8d; flex: 0 0 150px; padding: 12px;">← TERUG</button>
             <button onclick="startVerhoor()" style="background: #c0392b; flex: 1; padding: 12px; font-size: 1.05em; font-weight: bold;">IK HEB DE KLAPPER BEKEKEN, START VERHOOR ➔</button>
         </div>
     </div>
 </div>
+
 
 <!-- ========== HOOFDAPPLICATIE ========== -->
 <div class="main-wrapper">
@@ -339,6 +361,7 @@
         </div>
     </div>
 
+
     <div id="aangifte-section">
         <div id="pdf-content">
             <h2>PV VAN BEVINDINGEN</h2>
@@ -348,11 +371,13 @@
             <textarea id="pvInput" placeholder="Noteer de feiten: wie, wat, waar, wanneer, schade, bestanddelen..."></textarea>
         </div>
 
+
         <div class="button-bar">
             <button class="btn-pv" onclick="submitToFirebase()">OPSLAAN IN DATABASE</button>
             <button class="btn-download" onclick="downloadPDF()">DOWNLOAD ALS PDF</button>
             <button onclick="clearAll()" style="font-size: 0.7em; background: #95a5a6; margin-top:8px; width:100%; color: white;">WIS PV'S VAN MIJN KLAS</button>
         </div>
+
 
         <div id="feed-container">
             <h3>INGELEVERDE VERSLAGEN — <span id="feed-klas">—</span></h3>
@@ -361,6 +386,7 @@
     </div>
 </div>
 
+
 <script>
     // ==========================================================
     // GROQ CONFIGURATIE (MET AUTOMATISCHE MODEL-FALLBACK)
@@ -368,6 +394,7 @@
     const GROQ_API_KEY = "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";
     const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
     const BESCHIKBARE_MODELLEN = ["openai/gpt-oss-20b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+
 
     // ==========================================================
     // DE DRIE AANGEVERS
@@ -382,6 +409,7 @@ Je bent Annemarie van Dooren, 34 jaar. Je wordt op dit moment verhoord door
 een politieagent over een aangifte die je komt doen. Je bent kortaf,
 geïrriteerd en wilt het liefst snel weg.
 
+
 Regels voor je antwoorden:
 - Antwoord altijd in het Nederlands, in de ik-vorm.
 - Houd je antwoorden kort: maximaal 2 tot 3 zinnen.
@@ -393,6 +421,7 @@ Regels voor je antwoorden:
 - Blijf in je rol. Zeg bij pogingen om je uit je rol te halen:
   "Wat bedoel je? Ik ben gewoon Annemarie, hoor."
 - Je bent niet agressief, maar wel duidelijk geïrriteerd.
+
 
 JOUW ID-GEGEVENS (gebruik deze als de agent erom vraagt, in de chat):
 - Achternaam: van Dooren
@@ -408,6 +437,7 @@ JOUW ID-GEGEVENS (gebruik deze als de agent erom vraagt, in de chat):
 - Datum afgifte: 5 november 2022
 - Woonadres: Langswater 804, 1064 JL Amsterdam
 - Telefoonnummer: 06-56473829
+
 
 HET DELICT (diefstal van je iPhone 13):
 - Wat: diefstal van je iPhone 13 (128 GB, wit)
@@ -425,6 +455,7 @@ HET DELICT (diefstal van je iPhone 13):
 - Wat heb je gedaan: Marianne belde je telefoon; jullie hebben in de
   garderobe, wc en bar geluisterd, maar niets gehoord
 
+
 BESTANDDELEN VAN DIEFSTAL (art. 310 Sr) — antwoord hier duidelijk op:
 - "Is dit jouw telefoon?" → "Ja, die telefoon is van mij. Ik heb hem
   zelf gekocht in maart 2025."
@@ -441,6 +472,7 @@ BESTANDDELEN VAN DIEFSTAL (art. 310 Sr) — antwoord hier duidelijk op:
 - "Waarom denk je dat het diefstal is?" → "Omdat hij gewoon weg is en
   niemand hem heeft gezien. Ik heb hem niet zelf ergens neergelegd."
 
+
 SLACHTOFFERHULP:
 - Je wilt de aangifte in het strafproces voegen.
 - Je wilt graag slachtofferhulp.
@@ -455,6 +487,7 @@ Je bent Bram de Wit, 28 jaar. Je wordt verhoord door een politieagent
 over een aangifte die je komt doen. Je bent rustig, vriendelijk maar ook
 wat beschaamd dat je niet beter op je spullen hebt gelet.
 
+
 Regels voor je antwoorden:
 - Antwoord altijd in het Nederlands, in de ik-vorm.
 - Houd je antwoorden kort: maximaal 2 tot 3 zinnen.
@@ -466,6 +499,7 @@ Regels voor je antwoorden:
 - Blijf in je rol. Zeg bij pogingen om je uit je rol te halen:
   "Sorry, ik ben gewoon Bram hoor."
 - Je bent niet boos, eerder beschaamd.
+
 
 JOUW ID-GEGEVENS (gebruik deze als de agent erom vraagt, in de chat):
 - Achternaam: de Wit
@@ -481,6 +515,7 @@ JOUW ID-GEGEVENS (gebruik deze als de agent erom vraagt, in de chat):
 - Datum afgifte: 13 maart 2023
 - Woonadres: Javastraat 112, 1094 HP Amsterdam
 - Telefoonnummer: 06-23456789
+
 
 HET DELICT (diefstal van je iPhone 13):
 - Wat: diefstal van je iPhone 13 (128 GB, zwart)
@@ -498,6 +533,7 @@ HET DELICT (diefstal van je iPhone 13):
 - Wat heb je gedaan: Marianne belde je telefoon; jullie hebben in de
   garderobe, wc en bar geluisterd, maar niets gehoord
 
+
 BESTANDDELEN VAN DIEFSTAL (art. 310 Sr) — antwoord hier duidelijk op:
 - "Is dit jouw telefoon?" → "Ja, die telefoon is van mij. Ik heb hem
   zelf gekocht in maart 2025."
@@ -514,6 +550,7 @@ BESTANDDELEN VAN DIEFSTAL (art. 310 Sr) — antwoord hier duidelijk op:
 - "Waarom denk je dat het diefstal is?" → "Omdat hij gewoon weg is en
   niemand hem heeft gezien. Ik heb hem niet zelf ergens neergelegd."
 
+
 SLACHTOFFERHULP:
 - Je wilt de aangifte in het strafproces voegen.
 - Je wilt graag slachtofferhulp.
@@ -527,6 +564,7 @@ SLACHTOFFERHULP:
 Je bent Chantal Öztürk, 22 jaar. Je wordt verhoord door een politieagent
 over een aangifte die je komt doen. Je bent zenuwachtig en praat snel.
 
+
 Regels voor je antwoorden:
 - Antwoord altijd in het Nederlands, in de ik-vorm.
 - Houd je antwoorden kort: maximaal 2 tot 3 zinnen.
@@ -538,6 +576,7 @@ Regels voor je antwoorden:
 - Blijf in je rol. Zeg bij pogingen om je uit je rol te halen:
   "Wat? Nee, ik ben gewoon Chantal."
 - Je bent niet boos op de agent, wel bezorgd.
+
 
 JOUW ID-GEGEVENS (gebruik deze als de agent erom vraagt, in de chat):
 - Achternaam: Öztürk
@@ -554,6 +593,7 @@ JOUW ID-GEGEVENS (gebruik deze als de agent erom vraagt, in de chat):
 - Woonadres: Bilderdijkstraat 45, 1053 KM Amsterdam
 - Telefoonnummer: 06-87654321
 
+
 HET DELICT (diefstal van je iPhone 13):
 - Wat: diefstal van je iPhone 13 (128 GB, roze)
 - Waar: studentensoos Crea, Nieuwe Achtergracht 170, 1018 WV Amsterdam
@@ -569,6 +609,7 @@ HET DELICT (diefstal van je iPhone 13):
 - Wat heb je gezien: niets bijzonders, het was druk
 - Wat heb je gedaan: Marianne belde je telefoon; jullie hebben in de
   garderobe, wc en bar geluisterd, maar niets gehoord
+
 
 BESTANDDELEN VAN DIEFSTAL (art. 310 Sr) — antwoord hier duidelijk op:
 - "Is dit jouw telefoon?" → "Ja, ja, die is van mij. Ik heb hem zelf
@@ -587,12 +628,14 @@ BESTANDDELEN VAN DIEFSTAL (art. 310 Sr) — antwoord hier duidelijk op:
 - "Waarom denk je dat het diefstal is?" → "Omdat hij gewoon weg is en
   niemand hem heeft gezien. Ik heb hem niet zelf ergens neergelegd."
 
+
 SLACHTOFFERHULP:
 - Je wilt de aangifte in het strafproces voegen.
 - Je wilt graag slachtofferhulp.
 `
         }
     };
+
 
     // ==========================================================
     // FIREBASE
@@ -607,8 +650,10 @@ SLACHTOFFERHULP:
         databaseURL: "https://aangifteq2les1-default-rtdb.europe-west1.firebasedatabase.app/"
     };
 
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
 
     // ==========================================================
     // SESSIE
@@ -616,6 +661,7 @@ SLACHTOFFERHULP:
     let sessie = null;
     let messages = [];
     let feedRef = null;
+
 
     // ==========================================================
     // HULPFUNCTIES
@@ -625,6 +671,7 @@ SLACHTOFFERHULP:
         d.textContent = s == null ? '' : String(s);
         return d.innerHTML;
     }
+
 
     function toonStatus(bericht) {
         let el = document.getElementById('status-melding');
@@ -641,6 +688,7 @@ SLACHTOFFERHULP:
         clearTimeout(el._timer);
         el._timer = setTimeout(() => { el.style.opacity = '0'; }, 3500);
     }
+
 
     function bevestig(vraag) {
         return new Promise((resolve) => {
@@ -662,10 +710,12 @@ SLACHTOFFERHULP:
         });
     }
 
+
     function logFout(context, error) {
         console.error(`[${context}]`, error);
         toonStatus(`Fout (${context}): ${(error && (error.code || '') + ' ' + (error.message || '')).trim()}`);
     }
+
 
     // ==========================================================
     // NAVIGATIE TUSSEN SCHERMEN
@@ -673,18 +723,23 @@ SLACHTOFFERHULP:
     function naarPdfViewer() {
         document.getElementById('instructie-overlay').style.display = 'none';
         document.getElementById('pdf-overlay').style.display = 'flex';
+        // Zorg dat 'Terug' terug naar instructie leidt
         document.getElementById('btn-pdf-terug').style.display = 'inline-block';
     }
+
 
     function terugNaarInstructie() {
         document.getElementById('pdf-overlay').style.display = 'none';
         document.getElementById('instructie-overlay').style.display = 'flex';
     }
 
+
     function bekijkKlapperTijdensVerhoor() {
         document.getElementById('pdf-overlay').style.display = 'flex';
+        // Verberg 'Terug naar instructie' als we al middenin het verhoor zitten
         document.getElementById('btn-pdf-terug').style.display = 'none';
     }
+
 
     function startVerhoor() {
         document.getElementById('instructie-overlay').style.display = 'none';
@@ -692,6 +747,7 @@ SLACHTOFFERHULP:
         document.querySelector('.main-wrapper').style.display = 'flex';
         document.getElementById('botInput').focus();
     }
+
 
     // ==========================================================
     // LOGIN & TOEWIJZING
@@ -702,12 +758,15 @@ SLACHTOFFERHULP:
         const errEl = document.getElementById('login-error');
         errEl.textContent = '';
 
+
         if (!klas) { errEl.textContent = 'Kies eerst je klas.'; return; }
         if (!naam) { errEl.textContent = 'Vul je naam in.'; return; }
+
 
         const btn = document.getElementById('loginBtn');
         btn.disabled = true;
         btn.textContent = 'BEZIG MET TOEWIJZEN...';
+
 
         try {
             const saved = JSON.parse(localStorage.getItem('sessie') || 'null');
@@ -715,6 +774,7 @@ SLACHTOFFERHULP:
                 startSession(klas, naam, saved.aangeverId);
                 return;
             }
+
 
             const aangeversRef = db.ref(`bureau/${klas}/aangevers`);
             const snap = await aangeversRef.once('value');
@@ -726,6 +786,7 @@ SLACHTOFFERHULP:
                 });
             }
 
+
             const fresh = (await aangeversRef.once('value')).val() || {};
             let minId = 'A', minCount = Infinity;
             for (const id of ['A', 'B', 'C']) {
@@ -733,9 +794,11 @@ SLACHTOFFERHULP:
                 if (count < minCount) { minCount = count; minId = id; }
             }
 
-            await db.ref(`bureau/${klas}/aangevers/${minId}/studenten/${naam}`).set(true);
+
+            await db.ref(`bureau/{minId}/studenten/${naam}`).set(true);
             localStorage.setItem('sessie', JSON.stringify({ klas, naam, aangeverId: minId }));
             startSession(klas, naam, minId);
+
 
         } catch (err) {
             logFout('login', err);
@@ -745,23 +808,28 @@ SLACHTOFFERHULP:
         }
     }
 
+
     function startSession(klas, naam, aangeverId) {
         sessie = { klas, naam, aangeverId };
         const a = AANGEVERS[aangeverId];
 
-        const ref = db.ref(`bureau/${klas}/aangevers/${aangeverId}/studenten/${naam}`);
+
+        const ref = db.ref(`bureau/{aangeverId}/studenten/${naam}`);
         ref.onDisconnect().remove();
         ref.set(true);
+
 
         document.getElementById('chat-header').innerHTML =
             `<img class="header-img" src="${a.foto}" onerror="this.style.display='none'">` +
             `<div class="header-title">VERHOOR: ${a.naam.toUpperCase()}</div>`;
+
 
         document.getElementById('sessie-info').textContent =
             `Klas ${klas} · ${naam} · Aangever ${a.naam}`;
         document.getElementById('feed-klas').textContent = klas;
         document.getElementById('dossier-nr').textContent =
             `#${aangeverId}-2026`;
+
 
         messages = [
             { role: "system", content: a.prompt.trim() },
@@ -770,22 +838,26 @@ SLACHTOFFERHULP:
         document.getElementById('messages').innerHTML =
             `<div class="bubble bot">${escapeHtml(a.begroeting)}</div>`;
 
+
         document.getElementById('login-overlay').style.display = 'none';
         document.getElementById('instructie-overlay').style.display = 'flex';
+
 
         loadFeed(klas);
         updateConnIndicator();
     }
 
+
     function logout() {
         if (sessie) {
-            const ref = db.ref(`bureau/${sessie.klas}/aangevers/${sessie.aangeverId}/studenten/${sessie.naam}`);
+            const ref = db.ref(`bureau/{sessie.aangeverId}/studenten/${sessie.naam}`);
             ref.onDisconnect().cancel();
             ref.remove();
         }
         localStorage.removeItem('sessie');
         location.reload();
     }
+
 
     // ==========================================================
     // CHAT MET GROQ
@@ -797,10 +869,12 @@ SLACHTOFFERHULP:
         const val = input.value.trim();
         if (!val) return;
 
+
         if (!GROQ_API_KEY) {
             toonStatus("De docent moet nog een Groq API-key in de code plaatsen.");
             return;
         }
+
 
         addBubble(val, 'user-msg');
         messages.push({ role: "user", content: val });
@@ -808,8 +882,10 @@ SLACHTOFFERHULP:
         input.disabled = true;
         sendBtn.disabled = true;
 
+
         let reply = null;
         let lastError = null;
+
 
         for (const modelName of BESCHIKBARE_MODELLEN) {
             try {
@@ -826,10 +902,12 @@ SLACHTOFFERHULP:
                     })
                 });
 
+
                 if (!response.ok) {
                     const errData = await response.json().catch(() => ({}));
                     throw new Error(errData.error?.message || `Status: ${response.status}`);
                 }
+
 
                 const data = await response.json();
                 reply = data.choices?.[0]?.message?.content;
@@ -839,6 +917,7 @@ SLACHTOFFERHULP:
                 console.warn(`Model ${modelName} faalde, probeert alternatief...`, err);
             }
         }
+
 
         if (reply) {
             const cleanReply = reply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
@@ -851,10 +930,12 @@ SLACHTOFFERHULP:
             messages.pop();
         }
 
+
         input.disabled = false;
         sendBtn.disabled = false;
         input.focus();
     }
+
 
     function addBubble(text, side) {
         const div = document.createElement('div');
@@ -865,71 +946,39 @@ SLACHTOFFERHULP:
         msgContainer.scrollTop = msgContainer.scrollHeight;
     }
 
-    // ==========================================================
-    // TEXT TO SPEECH (MANNEN- EN VROUWENSTEMMEN)
-    // ==========================================================
-    // Stemmenlijst vooraf initialiseren
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.getVoices();
-        window.speechSynthesis.onvoiceschanged = () => {
-            window.speechSynthesis.getVoices();
-        };
-    }
 
-    function getBestVoice(geslacht) {
-        if (!('speechSynthesis' in window)) return null;
+    function speak(text) {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = text;
+        msg.lang = 'nl-NL';
+
+        // Stem en toonhoogte koppelen aan het geslacht van de actieve aangever
+        const aangeverId = (sessie && sessie.aangeverId) ? sessie.aangeverId : 'A';
+        const isMan = (aangeverId === 'B');
+
         const voices = window.speechSynthesis.getVoices();
         const nlVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('nl'));
 
         const femaleNames = ['colette', 'fenna', 'claire', 'ellen', 'laura', 'fleur', 'lotte', 'female', 'vrouw'];
         const maleNames = ['bart', 'frank', 'daan', 'xander', 'ruben', 'male', 'man'];
 
-        if (geslacht === 'man') {
+        if (isMan) {
             const maleVoice = nlVoices.find(v => maleNames.some(name => v.name.toLowerCase().includes(name)));
-            if (maleVoice) return maleVoice;
+            if (maleVoice) msg.voice = maleVoice;
+            msg.pitch = 0.82; // Mannenstem (Bram)
+            msg.rate = 0.98;
         } else {
             const femaleVoice = nlVoices.find(v => femaleNames.some(name => v.name.toLowerCase().includes(name)));
-            if (femaleVoice) return femaleVoice;
-        }
-
-        return nlVoices[0] || null;
-    }
-
-    function speak(text) {
-        if (!('speechSynthesis' in window)) return;
-        window.speechSynthesis.cancel();
-
-        const msg = new SpeechSynthesisUtterance();
-        msg.text = text;
-        msg.lang = 'nl-NL';
-
-        // Bepaal wie er aan het woord is
-        const aangeverId = (sessie && sessie.aangeverId) ? sessie.aangeverId : 'A';
-        const isMan = (aangeverId === 'B'); // Bram is een man, Annemarie & Chantal zijn vrouwen
-
-        // 1. Zoek de best passende stem (man of vrouw)
-        const voice = getBestVoice(isMan ? 'man' : 'vrouw');
-        if (voice) {
-            msg.voice = voice;
-        }
-
-        // 2. Toonhoogte (pitch) & snelheid (rate) aanpassen per personage
-        if (isMan) {
-            // Bram de Wit: warme, lagere mannenstem
-            msg.pitch = 0.82;
-            msg.rate = 0.98;
-        } else if (aangeverId === 'C') {
-            // Chantal Öztürk: zenuwachtig, praat wat sneller en iets hogere vrouwentoon
-            msg.pitch = 1.25;
-            msg.rate = 1.10;
-        } else {
-            // Annemarie van Dooren: heldere, resolute vrouwenstem
-            msg.pitch = 1.15;
-            msg.rate = 1.02;
+            if (femaleVoice) msg.voice = femaleVoice;
+            msg.pitch = (aangeverId === 'C') ? 1.25 : 1.15; // Vrouwenstem (Annemarie & Chantal)
+            msg.rate = (aangeverId === 'C') ? 1.10 : 1.02;
         }
 
         window.speechSynthesis.speak(msg);
     }
+
 
     // ==========================================================
     // VERBINDINGSINDICATOR
@@ -942,6 +991,7 @@ SLACHTOFFERHULP:
     connEl.textContent = '● Verbinden...';
     document.body.appendChild(connEl);
 
+
     function updateConnIndicator() {
         db.ref('.info/connected').on('value', (snap) => {
             const ok = snap.val() === true;
@@ -950,6 +1000,7 @@ SLACHTOFFERHULP:
         });
     }
 
+
     // ==========================================================
     // PV OPSLAAN & WISSEN
     // ==========================================================
@@ -957,6 +1008,7 @@ SLACHTOFFERHULP:
         if (!sessie) return;
         const tekst = document.getElementById('pvInput').value.trim();
         if (!tekst) { toonStatus("Typ eerst je aangifte."); return; }
+
 
         db.ref('posts').push({
             tekst: tekst,
@@ -971,6 +1023,7 @@ SLACHTOFFERHULP:
         }).catch((err) => logFout('write', err));
     }
 
+
     function addFeedback(id) {
         const input = document.getElementById('fb-in-' + id);
         if (!input) return;
@@ -980,6 +1033,7 @@ SLACHTOFFERHULP:
             toonStatus("Feedback opgeslagen.");
         }).catch((err) => logFout('feedback', err));
     }
+
 
     async function clearAll() {
         if (!sessie) return;
@@ -994,6 +1048,7 @@ SLACHTOFFERHULP:
         }
     }
 
+
     function downloadPDF() {
         const element = document.getElementById('pdf-content');
         const opt = {
@@ -1005,6 +1060,7 @@ SLACHTOFFERHULP:
         };
         html2pdf().set(opt).from(element).save();
     }
+
 
     // ==========================================================
     // LIVE FEED
@@ -1029,11 +1085,14 @@ SLACHTOFFERHULP:
         return div;
     }
 
+
     function loadFeed(klas) {
         if (feedRef) feedRef.off();
         document.getElementById('feed-items').innerHTML = '';
 
+
         feedRef = db.ref('posts').orderByChild('klas').equalTo(klas).limitToLast(50);
+
 
         feedRef.on('child_added', (snap) => {
             const container = document.getElementById('feed-items');
@@ -1047,6 +1106,7 @@ SLACHTOFFERHULP:
             </div>`;
         });
 
+
         feedRef.on('child_changed', (snap) => {
             const el = document.getElementById('feed-item-' + snap.key);
             if (!el) return;
@@ -1055,11 +1115,13 @@ SLACHTOFFERHULP:
             el.querySelector('.fb-display').textContent = 'Feedback: ' + (item.feedback || 'Geen');
         }, (error) => logFout('feed-changed', error));
 
+
         feedRef.on('child_removed', (snap) => {
             const el = document.getElementById('feed-item-' + snap.key);
             if (el) el.remove();
         }, (error) => logFout('feed-removed', error));
     }
+
 
     // ==========================================================
     // AUTO-RESUME
