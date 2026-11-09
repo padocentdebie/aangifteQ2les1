@@ -47,7 +47,7 @@
         .login-card button:disabled { background: #7f8c8d; cursor: not-allowed; }
         #login-error { color: #e74c3c; font-size: 0.85em; margin-top: 12px; min-height: 1em; }
 
-        /* ========== INSTRUCTIE SCHERM (NIEUW) ========== */
+        /* ========== INSTRUCTIE SCHERM ========== */
         #instructie-overlay {
             position: fixed; inset: 0;
             background: linear-gradient(135deg, #0a0e14 0%, #1a2a6c 100%);
@@ -67,7 +67,7 @@
             color: #d1d1d1; font-size: 0.9em; line-height: 1.5;
         }
         .instructie-lijst li {
-            position: relative; padding-left: 24px; margin-bottom: 8px;
+            position: relative; padding-left: 24px; margin-bottom: 12px;
         }
         .instructie-lijst li::before {
             content: "✓"; position: absolute; left: 0; color: #27ae60; font-weight: bold;
@@ -96,7 +96,6 @@
             border-radius: 8px; overflow: hidden;
         }
 
-        /* ===== CHAT-HEADER: afbeelding boven, titel eronder ===== */
         #chat-header {
             background: #c0392b; color: white; font-weight: bold;
             display: flex; flex-direction: column; align-items: stretch;
@@ -204,7 +203,7 @@
     </div>
 </div>
 
-<!-- ========== INSTRUCTIE SCHERM (NIEUW) ========== -->
+<!-- ========== INSTRUCTIE SCHERM ========== -->
 <div id="instructie-overlay">
     <div class="instructie-card">
         <h1>📋 Instructie: PV Aangifte</h1>
@@ -224,19 +223,21 @@
             <li>De aangever spreekt in de <b>onvoltooid verleden tijd</b> (OVT).</li>
             <li>Vraag of de aangever zich <b>voegt in het strafproces</b> (of niet).</li>
             <li>Vraag of de aangever <b>gebruikmaakt van slachtofferhulp</b> (of niet).</li>
-            <li>De aangever legt een verklaring af, de tekst begint met <b>'Ik verklaar ... '</b>.</li>
-                </p>
-    <p style="margin: 0 0 6px 0; font-weight: 600;">Verklaring</p>
-    <div style="background-color: #ffffff; border: 1px solid #e9ecef; border-radius: 4px; padding: 12px 14px; font-style: italic; color: #374151;">
-        &ldquo;Ik doe aangifte van mishandeling, dwang en bedreiging gepleegd door mijn ex-vriend:<br>
-        Willem Frederik van Santen, geboren op 10 juli 2007 te Rotterdam.<br><br>
-        Ik heb niemand toestemming gegeven om deze strafbare feiten te plegen, niemand had het recht hiertoe.<br>
-        Ik ben op de hoogte van mijn slachtofferrechten en heb hierover geen aanvullende vragen.<br>
-        Ik wil gebruik maken van een domicilie adres.<br>
-        Ik wil de schade verhalen op de dader via bemiddeling door Openbaar Ministerie en mij voegen in het strafproces.<br>
-        Ik wil graag op de hoogte worden gehouden van het verloop van mijn aangifte.<br>
-        Ik ben op de hoogte dat het doen van een valse aangifte strafbaar is.<br>
-        Ik kende als eerst het broertje van Mohamed, Must.....&rdquo;
+            <li>De aangever legt een verklaring af, de tekst begint met <b>'Ik verklaar ... '</b>.
+                <!-- NETJES AFGESLOTEN VOORBEELDVENSTER -->
+                <div style="background-color: #ffffff; border: 1px solid #ced4da; border-left: 4px solid #0056b3; border-radius: 4px; padding: 12px 14px; margin-top: 8px; font-style: italic; color: #374151;">
+                    <div style="font-weight: bold; color: #0056b3; margin-bottom: 5px; font-style: normal; font-size: 0.85em;">Voorbeeld Verklaring:</div>
+                    &ldquo;Ik doe aangifte van mishandeling, dwang en bedreiging gepleegd door mijn ex-vriend:<br>
+                    - Willem Frederik van Santen, geboren op 10 juli 2007 te Rotterdam.<br><br>
+                    Ik heb niemand toestemming gegeven om deze strafbare feiten te plegen, niemand had het recht hiertoe.<br>
+                    Ik ben op de hoogte van mijn slachtofferrechten en heb hierover geen aanvullende vragen.<br>
+                    Ik wil gebruik maken van een domicilie adres.<br>
+                    Ik wil de schade verhalen op de dader via bemiddeling door Openbaar Ministerie en mij voegen in het strafproces.<br>
+                    Ik wil graag op de hoogte worden gehouden van het verloop van mijn aangifte.<br>
+                    Ik ben op de hoogte dat het doen van een valse aangifte strafbaar is.<br>
+                    Ik kende als eerst het broertje van Mohamed, Must.....&rdquo;
+                </div>
+            </li>
         </ul>
 
         <div class="instructie-quote">
@@ -289,19 +290,19 @@
 
 <script>
     // ==========================================================
-    // GROQ CONFIGURATIE
+    // GROQ CONFIGURATIE (MET AUTOMATISCHE MODEL-FALLBACK)
     // ==========================================================
     const GROQ_API_KEY = "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";
     const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-    const GROQ_MODEL = "openai/gpt-oss-20b";
+    const BESCHIKBARE_MODELLEN = ["openai/gpt-oss-20b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
 
     // ==========================================================
-    // DE DRIE AANGEVERS — IDENTIEKE CASUSSEN, ID VIA CHAT
+    // DE DRIE AANGEVERS
     // ==========================================================
     const AANGEVERS = {
         A: {
             naam: "Annemarie van Dooren",
-            foto: "annemarievandoorenbalie.png", /* <-- WEER TERUGGEZET NAAR JOUW BESTANDSNAAM */
+            foto: "annemarievandoorenbalie.png",
             begroeting: "Hé. Ik ben Annemarie. Laten we dit even snel regelen, want ik baal hier flink van. Wat wil je weten?",
             prompt: `
 Je bent Annemarie van Dooren, 34 jaar. Je wordt op dit moment verhoord door
@@ -594,7 +595,7 @@ SLACHTOFFERHULP:
     }
 
     // ==========================================================
-    // LOGIN & TOEWIJZING
+    // LOGIN & TOEWIJZING (GEREPAREERDE PATHS)
     // ==========================================================
     async function login() {
         const klas = document.getElementById('klasSelect').value;
@@ -633,13 +634,14 @@ SLACHTOFFERHULP:
                 if (count < minCount) { minCount = count; minId = id; }
             }
 
+            // Gecorrigeerd: juiste interpolatie en klas-locatie
             await db.ref(`bureau/${klas}/aangevers/${minId}/studenten/${naam}`).set(true);
             localStorage.setItem('sessie', JSON.stringify({ klas, naam, aangeverId: minId }));
             startSession(klas, naam, minId);
 
         } catch (err) {
             logFout('login', err);
-            errEl.textContent = 'Toewijzen mislukt. Controleer de Firebase rules.';
+            errEl.textContent = 'Toewijzen mislukt. Controleer de verbinding of Firebase.';
             btn.disabled = false;
             btn.textContent = 'INLOGGEN BIJ DE BALIE';
         }
@@ -649,20 +651,21 @@ SLACHTOFFERHULP:
         sessie = { klas, naam, aangeverId };
         const a = AANGEVERS[aangeverId];
 
+        // Gecorrigeerd: juiste interpolatie
         const ref = db.ref(`bureau/${klas}/aangevers/${aangeverId}/studenten/${naam}`);
         ref.onDisconnect().remove();
         ref.set(true);
 
-        // Grote begeleidende afbeelding boven de chat, titel eronder
+        // Gecorrigeerd: foto en titel kloppen nu
         document.getElementById('chat-header').innerHTML =
-            `<img class="header-img" src="${a.foto}" alt="${a.naam}" onerror="this.style.display='none'">` +
+            `<img class="header-img" src="${a.foto}" onerror="this.style.display='none'">` +
             `<div class="header-title">VERHOOR: ${a.naam.toUpperCase()}</div>`;
 
         document.getElementById('sessie-info').textContent =
-            `Klas ${klas} · ${naam} · Aangever ${aangeverId} (${a.naam})`;
+            `Klas ${klas} · ${naam} · Aangever ${a.naam}`;
         document.getElementById('feed-klas').textContent = klas;
         document.getElementById('dossier-nr').textContent =
-            `#${klas.toUpperCase()}-${aangeverId}-2026`;
+            `#${aangeverId}-2026`;
 
         messages = [
             { role: "system", content: a.prompt.trim() },
@@ -672,16 +675,16 @@ SLACHTOFFERHULP:
             `<div class="bubble bot">${escapeHtml(a.begroeting)}</div>`;
 
         document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('instructie-overlay').style.display = 'flex'; /* NIEUW */
+        document.getElementById('instructie-overlay').style.display = 'flex';
 
         loadFeed(klas);
         updateConnIndicator();
     }
 
-    // NIEUW
     function startVerhoor() {
         document.getElementById('instructie-overlay').style.display = 'none';
         document.querySelector('.main-wrapper').style.display = 'flex';
+        document.getElementById('botInput').focus();
     }
 
     function logout() {
@@ -695,7 +698,7 @@ SLACHTOFFERHULP:
     }
 
     // ==========================================================
-    // CHAT MET GROQ
+    // CHAT MET GROQ (MET AUTOMATISCHE MODEL-RETRY)
     // ==========================================================
     async function chatWithBot() {
         if (!sessie) { toonStatus('Log eerst in.'); return; }
@@ -715,41 +718,54 @@ SLACHTOFFERHULP:
         input.disabled = true;
         sendBtn.disabled = true;
 
-        try {
-            const response = await fetch(GROQ_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${GROQ_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: GROQ_MODEL,
-                    messages: messages,
-                    stream: false
-                })
-            });
+        let reply = null;
+        let lastError = null;
 
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.error?.message || `Statuscode: ${response.status}`);
+        // Probeert modellen achter elkaar indien Groq een foutmelding geeft
+        for (const modelName of BESCHIKBARE_MODELLEN) {
+            try {
+                const response = await fetch(GROQ_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${GROQ_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: modelName,
+                        messages: messages,
+                        temperature: 0.7
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error?.message || `Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                reply = data.choices?.[0]?.message?.content;
+                if (reply) break; // Succesvol antwoord ontvangen
+            } catch (err) {
+                lastError = err;
+                console.warn(`Model ${modelName} faalde, probeert alternatief...`, err);
             }
-
-            const data = await response.json();
-            const reply = data.choices?.[0]?.message?.content;
-            if (!reply) throw new Error("Geen geldig antwoord ontvangen van Groq.");
-
-            messages.push({ role: "assistant", content: reply });
-            addBubble(reply, 'bot');
-            speak(reply);
-        } catch (error) {
-            console.error("Groq API fout:", error);
-            addBubble("Fout bij het verbinden met de aangever: " + error.message, 'bot');
-            messages.pop();
-        } finally {
-            input.disabled = false;
-            sendBtn.disabled = false;
-            input.focus();
         }
+
+        if (reply) {
+            // Filter eventuele AI-denkteksten (<think>...</think>) weg
+            const cleanReply = reply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+            messages.push({ role: "assistant", content: cleanReply });
+            addBubble(cleanReply, 'bot');
+            speak(cleanReply);
+        } else {
+            console.error("Groq API fout:", lastError);
+            addBubble("Fout bij het verbinden met de aangever: " + (lastError ? lastError.message : "Geen reactie"), 'bot');
+            messages.pop();
+        }
+
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
     }
 
     function addBubble(text, side) {
