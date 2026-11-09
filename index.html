@@ -268,7 +268,7 @@
                 <div style="background-color: #ffffff; border: 1px solid #ced4da; border-left: 4px solid #0056b3; border-radius: 4px; padding: 12px 14px; margin-top: 8px; font-style: italic; color: #374151;">
                     <div style="font-weight: bold; color: #0056b3; margin-bottom: 5px; font-style: normal; font-size: 0.85em;">Voorbeeld Verklaring:</div>
                     &ldquo;Ik doe aangifte van mishandeling, dwang en bedreiging gepleegd door mijn ex-vriend:<br>
-                    - Willem Frederik van Santen, geboren op 10 juli 2007 te Rotterdam.<br><br>
+                    Willem Frederik van Santen, geboren op 10 juli 2007 te Rotterdam.<br><br>
                     Ik heb niemand toestemming gegeven om deze strafbare feiten te plegen, niemand had het recht hiertoe.<br>
                     Ik ben op de hoogte van mijn slachtofferrechten en heb hierover geen aanvullende vragen.<br>
                     Ik wil gebruik maken van een domicilie adres.<br>
@@ -673,7 +673,6 @@ SLACHTOFFERHULP:
     function naarPdfViewer() {
         document.getElementById('instructie-overlay').style.display = 'none';
         document.getElementById('pdf-overlay').style.display = 'flex';
-        // Zorg dat 'Terug' terug naar instructie leidt
         document.getElementById('btn-pdf-terug').style.display = 'inline-block';
     }
 
@@ -684,7 +683,6 @@ SLACHTOFFERHULP:
 
     function bekijkKlapperTijdensVerhoor() {
         document.getElementById('pdf-overlay').style.display = 'flex';
-        // Verberg 'Terug naar instructie' als we al middenin het verhoor zitten
         document.getElementById('btn-pdf-terug').style.display = 'none';
     }
 
@@ -867,12 +865,69 @@ SLACHTOFFERHULP:
         msgContainer.scrollTop = msgContainer.scrollHeight;
     }
 
+    // ==========================================================
+    // TEXT TO SPEECH (MANNEN- EN VROUWENSTEMMEN)
+    // ==========================================================
+    // Stemmenlijst vooraf initialiseren
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+    }
+
+    function getBestVoice(geslacht) {
+        if (!('speechSynthesis' in window)) return null;
+        const voices = window.speechSynthesis.getVoices();
+        const nlVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('nl'));
+
+        const femaleNames = ['colette', 'fenna', 'claire', 'ellen', 'laura', 'fleur', 'lotte', 'female', 'vrouw'];
+        const maleNames = ['bart', 'frank', 'daan', 'xander', 'ruben', 'male', 'man'];
+
+        if (geslacht === 'man') {
+            const maleVoice = nlVoices.find(v => maleNames.some(name => v.name.toLowerCase().includes(name)));
+            if (maleVoice) return maleVoice;
+        } else {
+            const femaleVoice = nlVoices.find(v => femaleNames.some(name => v.name.toLowerCase().includes(name)));
+            if (femaleVoice) return femaleVoice;
+        }
+
+        return nlVoices[0] || null;
+    }
+
     function speak(text) {
         if (!('speechSynthesis' in window)) return;
         window.speechSynthesis.cancel();
+
         const msg = new SpeechSynthesisUtterance();
         msg.text = text;
         msg.lang = 'nl-NL';
+
+        // Bepaal wie er aan het woord is
+        const aangeverId = (sessie && sessie.aangeverId) ? sessie.aangeverId : 'A';
+        const isMan = (aangeverId === 'B'); // Bram is een man, Annemarie & Chantal zijn vrouwen
+
+        // 1. Zoek de best passende stem (man of vrouw)
+        const voice = getBestVoice(isMan ? 'man' : 'vrouw');
+        if (voice) {
+            msg.voice = voice;
+        }
+
+        // 2. Toonhoogte (pitch) & snelheid (rate) aanpassen per personage
+        if (isMan) {
+            // Bram de Wit: warme, lagere mannenstem
+            msg.pitch = 0.82;
+            msg.rate = 0.98;
+        } else if (aangeverId === 'C') {
+            // Chantal Öztürk: zenuwachtig, praat wat sneller en iets hogere vrouwentoon
+            msg.pitch = 1.25;
+            msg.rate = 1.10;
+        } else {
+            // Annemarie van Dooren: heldere, resolute vrouwenstem
+            msg.pitch = 1.15;
+            msg.rate = 1.02;
+        }
+
         window.speechSynthesis.speak(msg);
     }
 
